@@ -1,0 +1,83 @@
+﻿@{
+    Layout = "";
+}
+@model ITemplatePaymentInfoModel
+
+@using Template.Payments.Manual.Models;
+
+<table width="100%" cellpadding="0" cellspacing="0">
+    <tr width="100%">
+        <td width="100%" style="display: flex; flex-direction: row; justify-content: center">
+            <div class="box" style="border-radius: 0.375rem; background-color: white; box-shadow: 0px 0px 7px rgba(0, 0, 0, 0.2); display: flex; overflow: hidden; padding: 1rem; max-width: 800px; width: 100%; flex-grow: 1; justify-content: center; align-items: center">
+                <div class="vstack">
+                    <div class="hstack" style="display: flex; align-items: center;">
+                        <span class="feather" style="font-size: 25px; color: #1a9fff; flex-grow: 0; justify-content: center; align-items: center; margin-right: 0.5rem;">ℹ️</span>
+                        <h2 class="heading" style="color: #1a9fff; font-size: 1.125rem;">INSTRUCCIONES</h2>
+                    </div>
+                    <hr class="divider" style="margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0;">
+                    <div class="vstack-2" style="margin-bottom: 1.5rem;">
+                        @Html.Raw(Model.DescriptionText)
+                        <p class="text" style="font-weight: bold; font-size: 0.9rem; color: black; text-align: left;">Al finalizar el pago, ingresa los últimos 5 dígitos del número de referencia de la transacción en el campo de texto inferior.</p>
+                    </div>
+                    <hr class="divider" style="margin: 1rem 0; border: none; border-top: 1px solid #e2e8f0;">
+
+                    <div class="vstack">
+                        @if (Model.OrderTotals != null)
+                        {
+                            @foreach (var item in Model.OrderTotals)
+                            {
+                                <div class="hstack" style="display: flex; align-items: center;">
+                                    <p class="text" style="font-weight: bold; font-size: 0.9rem; color: black;">@($"Total en {item.Key}: ")</p>
+                                    <div style="width: 1rem"></div>
+                                    <h1 class="heading" style="font-size: 1rem;">@item.Value</h1>
+                                </div>
+                            }
+                        }
+                    </div>
+
+
+                </div>
+            </div>
+        </td>
+    </tr>
+
+
+    <tr>
+        <td>
+            <label asp-for="OperationNumber">N° de operacion: </label>
+        </td>
+        <td>
+            <nop-editor asp-for="OperationNumber" style="width:165px;" autocomplete="off" maxlength="22" />
+            <span asp-validation-for="OperationNumber"></span>
+        </td>
+    </tr>
+</table>
+
+
+<style>
+    .box { /* Apply inline styles here */
+    }
+
+    .vstack { /* Apply inline styles here */
+    }
+
+    .vstack-2 > *:not(:last-child) {
+        margin-bottom: 1rem;
+    }
+
+    .hstack { /* Apply inline styles here */
+    }
+
+    .feather { /* Apply inline styles here */
+    }
+
+    .heading { /* Apply inline styles here */
+    }
+
+    .divider { /* Apply inline styles here */
+    }
+
+    .paragraph {
+        font-size: 25px
+    }
+</style>

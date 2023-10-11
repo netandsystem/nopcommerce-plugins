@@ -1,0 +1,15 @@
+﻿@{
+    Layout = "_AdminLayout";
+
+    NopHtml.AppendScriptParts(ResourceLocation.Head, "~/Plugins/SevenSpikes.Core/Areas/Admin/Content/Scripts/admin.core.min.js", excludeFromBundle: true);    
+    NopHtml.AppendScriptParts(ResourceLocation.Footer,"~/Plugins/SevenSpikes.Core/Scripts/lib/kendo/2020.1.406/js/kendo.all.min.js", excludeFromBundle: true);
+}
+
+<link rel="stylesheet" href="~/Plugins/SevenSpikes.Core/Areas/Admin/Content/Styles/adminstyles.css" />
+
+<div class="spikes-admin-wrapper">
+    <div class="seven-spikes-settings">
+        @RenderBody()
+    </div>
+</div>
+

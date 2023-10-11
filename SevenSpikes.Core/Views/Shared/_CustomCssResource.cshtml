@@ -1,0 +1,17 @@
+﻿@using Nop.Core
+@using Nop.Core.Domain.Common
+@using Nop.Services.Configuration
+@using Nop.Web.Framework.Configuration
+@using Nop.Web.Framework.Themes
+@using Nop.Core.Configuration
+
+@inject IThemeContext themeContext
+@inject ISettingService settingService
+@inject IStoreContext storeContext
+@inject AppSettings appSettings
+
+@model string
+
+@{    
+    <link rel="stylesheet" href="@Model" />
+}

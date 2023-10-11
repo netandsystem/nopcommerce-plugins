@@ -1,0 +1,11 @@
+﻿@model string
+
+@inject ILocalizationService localizationService
+@inject IStoreContext storeContext
+
+@{
+    string storeName = await localizationService.GetLocalizedAsync(await storeContext.GetCurrentStoreAsync(), x => x.Name);
+}
+
+
+<img alt="@storeName" src="@Model" />

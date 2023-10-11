@@ -1,0 +1,8 @@
+﻿@using SevenSpikes.Nop.Scheduling
+
+@model SevenSpikes.Nop.Scheduling.Areas.Admin.Models.ScheduleModel
+
+<script asp-exclude-from-bundle="true" src="~/Plugins/SevenSpikes.Core/Areas/Admin/Content/Scripts/Scheduling.min.js"
+    asp-location="Footer"></script>
+
+@await Html.PartialAsync(Constants.ViewAdminScheduleCreateOrUpdate, Model)

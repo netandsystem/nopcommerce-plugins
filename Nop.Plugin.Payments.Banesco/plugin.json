@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Payment methods",
+  "FriendlyName": "Pago con Banesco",
+  "SystemName": "Payments.Banesco",
+  "Version": "1.45",
+  "SupportedVersions": [ "4.50" ],
+  "Author": "nopCommerce team",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Payments.Banesco.dll",
+  "Description": "This payment module allows you to enable \"Cash on delivery\" option in your store"
+}

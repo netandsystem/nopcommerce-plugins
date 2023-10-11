@@ -1,0 +1,10 @@
+﻿@using SevenSpikes.Nop.Conditions
+@model SevenSpikes.Nop.Conditions.Areas.Admin.Models.ConditionModel
+
+<script asp-exclude-from-bundle="true" src="~/Plugins/SevenSpikes.Core/Scripts/jquery.livequery.min.js" asp-location="Footer"></script>
+<script asp-exclude-from-bundle="true" src="~/Plugins/SevenSpikes.Core/Scripts/jquery.json-2.4.min.js" asp-location="Footer"></script>
+<script asp-exclude-from-bundle="true" src="~/Plugins/SevenSpikes.Core/Scripts/sevenspikes.core.min.js" asp-location="Footer"></script>
+<script asp-exclude-from-bundle="true" src="~/Plugins/SevenSpikes.Core/Areas/Admin/Content/Scripts/Conditions.min.js" 
+    asp-location="Footer"></script>
+
+@await Html.PartialAsync(Constants.ViewAdminConditionCreateOrUpdate, Model)

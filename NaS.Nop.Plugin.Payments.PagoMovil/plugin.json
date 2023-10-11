@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Payment methods",
+  "FriendlyName": "Pago Movil",
+  "SystemName": "Payments.PagoMovil",
+  "Version": "1.00",
+  "SupportedVersions": [ "4.50" ],
+  "Author": "Net and System team",
+  "DisplayOrder": 1,
+  "FileName": "NaS.Nop.Plugin.Payments.PagoMovil.dll",
+  "Description": "Este plugin permite pagar por Pago Movil"
+}
