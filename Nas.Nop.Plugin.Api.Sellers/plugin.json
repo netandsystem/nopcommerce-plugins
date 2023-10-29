@@ -1,0 +1,11 @@
+﻿{
+  "Group": "Api",
+  "FriendlyName": "Sellers plugin",
+  "SystemName": "Nas.Nop.Plugin.Api.Sellers",
+  "Version": "4.5.0",
+  "SupportedVersions": [ "4.50" ],
+  "Author": "Net and System team",
+  "DisplayOrder": -1,
+  "FileName": "Nas.Nop.Plugin.Api.Sellers.dll",
+  "Description": "This plugin is Restfull API for sellers"
+}
