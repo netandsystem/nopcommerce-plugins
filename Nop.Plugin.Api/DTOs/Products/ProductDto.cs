@@ -64,4 +64,10 @@ public class ProductDto : BaseDto
 
     [JsonProperty("stock_quantity")]
     public int StockQuantity { get; set; }
+
+    /// <summary>
+    /// Gets or sets the date and time of product update
+    /// </summary>
+    [JsonProperty("update_on_utc")]
+    public DateTime UpdatedOnUtc { get; set; }
 }

@@ -41,6 +41,7 @@ namespace Nop.Plugin.Api.Services;
 
 public class ProductApiService : IProductApiService
 {
+    #region Fields
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
     private readonly IRepository<Product> _productRepository;
     private readonly IStoreMappingService _storeMappingService;
@@ -90,7 +91,9 @@ public class ProductApiService : IProductApiService
     private readonly IWebHelper _webHelper;
     private readonly IRepository<Picture> _pictureRepository;
 
+    #endregion
 
+    #region Ctr
     public ProductApiService(
         IRepository<Product> productRepository,
         IRepository<ProductCategory> productCategoryMappingRepository,
@@ -192,6 +195,9 @@ public class ProductApiService : IProductApiService
         _pictureRepository = pictureRepository;
     }
 
+    #endregion
+
+    #region Methods
     public IList<Product> GetProducts(
         IList<int> ids = null,
         DateTime? createdAtMin = null, DateTime? createdAtMax = null, DateTime? updatedAtMin = null, DateTime? updatedAtMax = null,
@@ -372,6 +378,19 @@ public class ProductApiService : IProductApiService
 
         return productDto;
     }
+
+    public async Task<List<Product>> GetLastestUpdatedProducts(
+        DateTime? lastUpdateUtc
+    )
+    {
+        var query = from product in _productRepository.Table
+                    where lastUpdateUtc == null || product.UpdatedOnUtc > lastUpdateUtc
+                    select product;
+
+        return await query.ToListAsync();
+    }
+
+    #endregion
 
     #region Private methods
 

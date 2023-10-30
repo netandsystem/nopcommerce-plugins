@@ -28,6 +28,13 @@ using Nop.Services.Seo;
 using Nop.Services.Orders;
 using DocumentFormat.OpenXml.Spreadsheet;
 using System;
+using Microsoft.AspNetCore.Authorization;
+using Nop.Plugin.Api.Authorization.Policies;
+using Azure;
+using DocumentFormat.OpenXml.Math;
+using DocumentFormat.OpenXml.Vml.Spreadsheet;
+using MailKit.Search;
+using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -334,5 +341,24 @@ public class ProductsController : BaseApiController
         return Ok(productCategoriesRootObject);
     }
 
+
+    [HttpGet("syncdata", Name = "SyncData")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(ProductCategoriesRootObjectDto), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)
+    {
+        var products = await _productApiService.GetLastestUpdatedProducts(lastUpdateUtc);
+
+        var result = await _productApiService.JoinProductsAndPicturesAsync(products);
+
+        var productsRootObject = new ProductsRootObjectDto
+        {
+            Products = result
+        };
+
+        return OkResult(productsRootObject, fields);
+    }
     #endregion
 }

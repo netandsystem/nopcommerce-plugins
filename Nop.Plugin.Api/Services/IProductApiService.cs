@@ -46,4 +46,8 @@ public interface IProductApiService
         ProductSortingEnum? orderBy,
         bool? showHidden
     );
+
+    Task<List<Product>> GetLastestUpdatedProducts(
+        DateTime? lastUpdateUtc
+    );
 }
