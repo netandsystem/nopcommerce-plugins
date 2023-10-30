@@ -11,6 +11,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Infrastructure;
 using Nop.Plugin.Api.Domain;
 using Nop.Plugin.Api.Infrastructure;
+using Nop.Plugin.Api.MappingExtensions;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
 
@@ -29,7 +30,6 @@ public class CustomerRoleRequirement : IAuthorizationRequirement
 
     public CustomerRoleRequirement(Constants.Roles roleName)
     {
-        _roleEnum = roleName;
         _roleName = roleName.ToString();
         _httpContextAccessor = EngineContext.Current.Resolve<IHttpContextAccessor>();
         _customerService = EngineContext.Current.Resolve<ICustomerService>();
@@ -57,7 +57,7 @@ public class CustomerRoleRequirement : IAuthorizationRequirement
                 var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
                 var apiSettings = await _settingService.LoadSettingAsync<ApiSettings>(storeScope);
 
-                bool isRoleEnabled = apiSettings.EnabledRoles[_roleEnum];
+                bool isRoleEnabled = apiSettings.ToModel().EnabledRolesDic[_roleName];
                 bool isCustomerInRole = customerRoles.FirstOrDefault(cr => cr.SystemName == _roleName) != null;
 
                 return isRoleEnabled && isCustomerInRole;

@@ -1,6 +1,8 @@
 ﻿using Nop.Core.Configuration;
 using Nop.Plugin.Api.Infrastructure;
+using Nop.Plugin.Api.JSON.Serializers;
 using System.Collections.Generic;
+using System.Text.Json;
 
 #nullable enable
 
@@ -12,8 +14,10 @@ public class ApiSettings : ISettings
 
     public int TokenExpiryInDays { get; set; } = 0;
 
-    public Dictionary<Constants.Roles, bool> EnabledRoles { get; } = new() {
-        { Constants.Roles.Registered, true },
-        { Constants.Roles.Seller, true},
-    };
+    public string EnabledRoles { get; set; } = JsonSerializer.Serialize(
+        new Dictionary<string, bool>() {
+            { Constants.Roles.Registered.ToString(), true },
+            { Constants.Roles.Seller.ToString(), true},
+        }
+    );
 }
