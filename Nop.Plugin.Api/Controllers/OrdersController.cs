@@ -55,7 +55,7 @@ namespace Nop.Plugin.Api.Controllers;
 #nullable enable
 
 [Route("api/orders")]
-[Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+[Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
 public class OrdersController : BaseApiController
 {
     #region Fields

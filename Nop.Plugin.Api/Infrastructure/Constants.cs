@@ -4,11 +4,10 @@ namespace Nop.Plugin.Api.Infrastructure;
 
 public static class Constants
 {
-    public static class Roles
+    public enum Roles
     {
-        public const string ApiRoleSystemName = "Registered";
-
-        public const string ApiRoleName = "Registered";
+        Registered,
+        Seller
     }
 
     public static class ViewNames

@@ -43,6 +43,14 @@
                                 <nop-editor asp-for="EnableApi" />
                                 <span asp-validation-for="EnableApi"></span>
                             </div>
+                            <div class="col-md-12">
+                                <nop-override-store-checkbox asp-for="EnableClients" asp-input="EnableClients" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                <nop-label asp-for="EnableClients" />
+                            </div>
+                            <div class="col-md-15">
+                                <nop-override-store-checkbox asp-for="EnableSellers" asp-input="EnableSellers" asp-store-scope="@Model.ActiveStoreScopeConfiguration" />
+                                <nop-label asp-for="EnableSellers" />
+                            </div>
                         </div>
                         <div class="form-group advanced-setting">
                             <div class="col-md-3">

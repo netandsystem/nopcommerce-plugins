@@ -170,7 +170,7 @@ public class CustomersController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
     [HttpGet(Name = "GetCurrentCustomer")]
-    [Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
@@ -396,7 +396,7 @@ public class CustomersController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
     [HttpPut(Name = "UpdateCustomer")]
-    [Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), 422)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -489,7 +489,7 @@ public class CustomersController : BaseApiController
     /// <response code="401">Unauthorized</response>
     [HttpPost]
     [Route("address", Name = "CreateAddress")]
-    [Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [GetRequestsErrorInterceptorActionFilter]
     [ProducesResponseType(typeof(AddressDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -524,7 +524,7 @@ public class CustomersController : BaseApiController
     /// <response code="401">Unauthorized</response>
     [HttpPut]
     [Route("address", Name = "UpdateAddress")]
-    [Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [GetRequestsErrorInterceptorActionFilter]
     [ProducesResponseType(typeof(AddressDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -590,7 +590,7 @@ public class CustomersController : BaseApiController
     /// <response code="401">Unauthorized</response>
     [HttpDelete]
     [Route("address/{addressId}", Name = "DeleteAddress")]
-    [Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(void), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), 422)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]

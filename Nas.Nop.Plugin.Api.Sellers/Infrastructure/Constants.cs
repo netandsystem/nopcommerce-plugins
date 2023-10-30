@@ -4,12 +4,11 @@ namespace Nop.Plugin.Api.Infrastructure;
 
 public static class Constants
 {
-    public const string API_PREFIX = "api_sellers/";
+    public const string API_PREFIX = "api_seller/";
     public static class Roles
     {
-        public const string ApiRoleSystemName = "Registered";
-
-        public const string ApiRoleName = "Registered";
+        public const string ApiRoleSystemName = "Seller";
+        public const string ApiRoleName = "Seller";
     }
 
     public static class ViewNames

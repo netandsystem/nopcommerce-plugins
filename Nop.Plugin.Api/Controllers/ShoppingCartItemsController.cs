@@ -40,7 +40,7 @@ namespace Nop.Plugin.Api.Controllers;
 #nullable enable
 
 [Route("api/shopping_cart_items")]
-[Authorize(Policy = CustomerRoleAuthorizationPolicy.Name)]
+[Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
 public class ShoppingCartItemsController : BaseApiController
 {
     #region Fields

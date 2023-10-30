@@ -231,13 +231,13 @@ public class ApiStartup : INopStartup
 										policy.RequireAuthenticatedUser();
 									});
 
-				options.AddPolicy(CustomerRoleAuthorizationPolicy.Name, policy => policy.Requirements.Add(new CustomerRoleRequirement()));
+				options.AddPolicy(RegisterRoleAuthorizationPolicy.Name, policy => policy.Requirements.Add(new CustomerRoleRequirement()));
 			};
 		});
 
 		services.AddSingleton<IAuthorizationHandler, ActiveApiPluginAuthorizationPolicy>();
 		services.AddSingleton<IAuthorizationHandler, ValidSchemeAuthorizationPolicy>();
-		services.AddSingleton<IAuthorizationHandler, CustomerRoleAuthorizationPolicy>();
+		services.AddSingleton<IAuthorizationHandler, RegisterRoleAuthorizationPolicy>();
 
 	}
 }

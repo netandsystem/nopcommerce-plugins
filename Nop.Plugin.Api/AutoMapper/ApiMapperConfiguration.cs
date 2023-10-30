@@ -48,7 +48,6 @@ namespace Nop.Plugin.Api.AutoMapper
             CreateMap<ConfigurationModel, ApiSettings>();
 
             CreateMap<Category, CategoryDto>();
-            CreateMap<CategoryDto, Category>();
 
             CreateMap<Store, StoreDto>();
 

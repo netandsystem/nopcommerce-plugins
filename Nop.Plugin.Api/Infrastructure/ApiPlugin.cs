@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Nop.Core;
@@ -71,25 +72,33 @@ namespace Nop.Plugin.Api.Infrastructure
 
             await _settingService.SaveSettingAsync(new ApiSettings());
 
-            //var apiRole = await _customerService.GetCustomerRoleBySystemNameAsync(Constants.Roles.ApiRoleSystemName);
+            foreach (Constants.Roles role in Enum.GetValues(typeof(Constants.Roles)))
+            {
+                if (role != Constants.Roles.Registered)
+                {
+                    var roleSystemName = role.ToString();
+                    var apiRole = await _customerService.GetCustomerRoleBySystemNameAsync(roleSystemName);
 
-            //if (apiRole == null)
-            //{
-            //    apiRole = new CustomerRole
-            //    {
-            //        Name = Constants.Roles.ApiRoleName,
-            //        Active = true,
-            //        SystemName = Constants.Roles.ApiRoleSystemName
-            //    };
+                    if (apiRole == null)
+                    {
+                        apiRole = new CustomerRole
+                        {
+                            Name = roleSystemName,
+                            Active = true,
+                            SystemName = roleSystemName
+                        };
 
-            //    await _customerService.InsertCustomerRoleAsync(apiRole);
-            //}
-            //else if (apiRole.Active == false)
-            //{
-            //    apiRole.Active = true;
-            //    await _customerService.UpdateCustomerRoleAsync(apiRole);
-            //}
-            
+                        await _customerService.InsertCustomerRoleAsync(apiRole);
+                    }
+                    else if (apiRole.Active == false)
+                    {
+                        apiRole.Active = true;
+                        await _customerService.UpdateCustomerRoleAsync(apiRole);
+                    }
+                }
+                
+            }
+
             var activityLogTypeRepository = EngineContext.Current.Resolve<IRepository<ActivityLogType>>();
             var activityLogType = (await activityLogTypeRepository.GetAllAsync(query =>
             {
@@ -129,14 +138,21 @@ namespace Nop.Plugin.Api.Infrastructure
             //_localizationService.DeletePluginLocaleResource("Plugins.Api.Admin.Settings.GeneralSettingsTitle");
             //_localizationService.DeletePluginLocaleResource("Plugins.Api.Admin.Edit");
 
+            foreach (Constants.Roles role in Enum.GetValues(typeof(Constants.Roles)))
+            {
+                if (role != Constants.Roles.Registered)
+                {
+                    var roleSystemName = role.ToString();
+                    var apiRole = await _customerService.GetCustomerRoleBySystemNameAsync(roleSystemName);
 
-            //var apiRole = await _customerService.GetCustomerRoleBySystemNameAsync(Constants.Roles.ApiRoleSystemName);
-            //if (apiRole != null)
-            //{
-            //    apiRole.Active = false;
-            //    await _customerService.UpdateCustomerRoleAsync(apiRole);
-            //}
-            
+                    if (apiRole != null)
+                    {
+                        apiRole.Active = false;
+                        await _customerService.UpdateCustomerRoleAsync(apiRole);
+                    }
+                }
+            }
+
             var activityLogTypeRepository = EngineContext.Current.Resolve<IRepository<ActivityLogType>>();
             var activityLogType = (await activityLogTypeRepository.GetAllAsync(query =>
             {

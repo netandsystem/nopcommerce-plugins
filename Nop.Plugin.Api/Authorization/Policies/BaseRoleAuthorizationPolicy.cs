@@ -5,9 +5,12 @@ using Nop.Plugin.Api.Authorization.Requirements;
 
 namespace Nop.Plugin.Api.Authorization.Policies;
 
-public class CustomerRoleAuthorizationPolicy : AuthorizationHandler<CustomerRoleRequirement>
+#nullable enable
+
+public abstract class BaseRoleAuthorizationPolicy<TCustomerRoleRequirement> : AuthorizationHandler<TCustomerRoleRequirement>
+    where TCustomerRoleRequirement : BaseCustomerRoleRequirement
 {
-    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, CustomerRoleRequirement requirement)
+    protected async override Task HandleRequirementAsync(AuthorizationHandlerContext context, TCustomerRoleRequirement requirement)
     {
         if (await requirement.IsCustomerInRoleAsync())
         {
@@ -18,6 +21,4 @@ public class CustomerRoleAuthorizationPolicy : AuthorizationHandler<CustomerRole
             context.Fail();
         }
     }
-
-    public const string Name = "CustomerRoleAuthorizationPolicy";
 }

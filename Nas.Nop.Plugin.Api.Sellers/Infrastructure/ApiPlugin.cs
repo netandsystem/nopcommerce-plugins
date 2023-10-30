@@ -71,25 +71,25 @@ namespace Nop.Plugin.Api.Infrastructure
 
             await _settingService.SaveSettingAsync(new ApiSettings());
 
-            //var apiRole = await _customerService.GetCustomerRoleBySystemNameAsync(Constants.Roles.ApiRoleSystemName);
+            var apiRole = await _customerService.GetCustomerRoleBySystemNameAsync(Constants.Roles.ApiRoleSystemName);
 
-            //if (apiRole == null)
-            //{
-            //    apiRole = new CustomerRole
-            //    {
-            //        Name = Constants.Roles.ApiRoleName,
-            //        Active = true,
-            //        SystemName = Constants.Roles.ApiRoleSystemName
-            //    };
+            if (apiRole == null)
+            {
+                apiRole = new CustomerRole
+                {
+                    Name = Constants.Roles.ApiRoleName,
+                    Active = true,
+                    SystemName = Constants.Roles.ApiRoleSystemName
+                };
 
-            //    await _customerService.InsertCustomerRoleAsync(apiRole);
-            //}
-            //else if (apiRole.Active == false)
-            //{
-            //    apiRole.Active = true;
-            //    await _customerService.UpdateCustomerRoleAsync(apiRole);
-            //}
-            
+                await _customerService.InsertCustomerRoleAsync(apiRole);
+            }
+            else if (apiRole.Active == false)
+            {
+                apiRole.Active = true;
+                await _customerService.UpdateCustomerRoleAsync(apiRole);
+            }
+
             var activityLogTypeRepository = EngineContext.Current.Resolve<IRepository<ActivityLogType>>();
             var activityLogType = (await activityLogTypeRepository.GetAllAsync(query =>
             {
