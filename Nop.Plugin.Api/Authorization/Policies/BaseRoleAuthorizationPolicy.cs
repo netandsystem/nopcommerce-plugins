@@ -7,10 +7,9 @@ namespace Nop.Plugin.Api.Authorization.Policies;
 
 #nullable enable
 
-public abstract class BaseRoleAuthorizationPolicy<TCustomerRoleRequirement> : AuthorizationHandler<TCustomerRoleRequirement>
-    where TCustomerRoleRequirement : BaseCustomerRoleRequirement
+public class BaseRoleAuthorizationPolicy : AuthorizationHandler<CustomerRoleRequirement>
 {
-    protected async override Task HandleRequirementAsync(AuthorizationHandlerContext context, TCustomerRoleRequirement requirement)
+    protected async override Task HandleRequirementAsync(AuthorizationHandlerContext context, CustomerRoleRequirement requirement)
     {
         if (await requirement.IsCustomerInRoleAsync())
         {

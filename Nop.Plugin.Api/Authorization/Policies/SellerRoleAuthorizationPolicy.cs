@@ -6,7 +6,7 @@ using Nop.Plugin.Api.Infrastructure;
 
 namespace Nop.Plugin.Api.Authorization.Policies;
 
-public class SellerRoleAuthorizationPolicy : BaseRoleAuthorizationPolicy<SellerRoleRequirement>
+public class SellerRoleAuthorizationPolicy : BaseRoleAuthorizationPolicy
 {
     public const string Name = nameof(SellerRoleAuthorizationPolicy);
 }

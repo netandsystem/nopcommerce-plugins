@@ -6,7 +6,7 @@ using Nop.Plugin.Api.Infrastructure;
 
 namespace Nop.Plugin.Api.Authorization.Policies;
 
-public class RegisterRoleAuthorizationPolicy : BaseRoleAuthorizationPolicy<RegisterRoleRequirement>
+public class RegisterRoleAuthorizationPolicy : BaseRoleAuthorizationPolicy
 {
     public const string Name = nameof(RegisterRoleAuthorizationPolicy);
 }

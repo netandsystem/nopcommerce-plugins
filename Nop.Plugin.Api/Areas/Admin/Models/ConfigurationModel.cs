@@ -1,4 +1,6 @@
-﻿using Nop.Web.Framework.Mvc.ModelBinding;
+﻿using Nop.Plugin.Api.Infrastructure;
+using Nop.Web.Framework.Mvc.ModelBinding;
+using System.Collections.Generic;
 
 namespace Nop.Plugin.Api.Areas.Admin.Models
 {
@@ -16,10 +18,10 @@ namespace Nop.Plugin.Api.Areas.Admin.Models
 
         public int ActiveStoreScopeConfiguration { get; set; }
 
-        [NopResourceDisplayName("Plugins.Api.Admin.EnableClients")]
-        public bool EnableClients { get; set; } = true;
-
-        [NopResourceDisplayName("Plugins.Api.Admin.EnableSellers")]
-        public bool EnableSellers { get; set; } = true;
+        [NopResourceDisplayName("Plugins.Api.Admin.EnabledRoles")]
+        public Dictionary<Constants.Roles, bool> EnabledRoles { get; } = new() {
+            { Constants.Roles.Registered, true },
+            { Constants.Roles.Seller, true},
+        };
     }
 }

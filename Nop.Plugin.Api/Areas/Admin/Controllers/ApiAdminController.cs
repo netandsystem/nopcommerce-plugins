@@ -84,8 +84,7 @@ namespace Nop.Plugin.Api.Areas.Admin.Controllers
                 await _settingService.SaveSettingAsync(settings, x => x.TokenExpiryInDays, storeScope, false);
             }
 
-            await _settingService.SaveSettingAsync(settings, x => x.EnableClients, storeScope, false);
-            await _settingService.SaveSettingAsync(settings, x => x.EnableSellers, storeScope, false);
+            await _settingService.SaveSettingAsync(settings, x => x.EnabledRoles, storeScope, false);
 
             //now clear settings cache
             await _settingService.ClearCacheAsync();
