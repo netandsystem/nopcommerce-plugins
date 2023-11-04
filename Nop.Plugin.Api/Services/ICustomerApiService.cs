@@ -54,4 +54,9 @@ public interface ICustomerApiService
     Task SetCustomerCurrencyAsync(Customer customer, Currency currency);
 
     Task<Address?> GetCustomerAddressAsync(int customerId, int addressId);
+
+    Task<List<CustomerDto>> GetLastestUpdatedCustomersBySellerAsync(
+        Customer seller,
+        DateTime? lastUpdateUtc
+    );
 }

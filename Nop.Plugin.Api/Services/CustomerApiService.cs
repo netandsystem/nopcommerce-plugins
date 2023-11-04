@@ -24,6 +24,7 @@ using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
 using Nop.Services.Common;
 using Nop.Services.Directory;
+using Nop.Core.Domain.Catalog;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -278,7 +279,20 @@ public class CustomerApiService : ICustomerApiService
         return await _customerService.GetCustomerAddressAsync(customerId, addressId);
     }
 
-    #nullable disable
+    public async Task<List<CustomerDto>> GetLastestUpdatedCustomersBySellerAsync(
+        Customer seller,
+        DateTime? lastUpdateUtc
+    )
+    {
+        var query = from customer in _customerRepository.Table
+                    where   customer.VendorId == seller.Id &&
+                            (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
+                    select customer.ToDto();
+
+        return await query.ToListAsync();
+    }
+
+#nullable disable
     #endregion
 
     #region Private Methods

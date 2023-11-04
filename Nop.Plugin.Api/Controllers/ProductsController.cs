@@ -344,7 +344,7 @@ public class ProductsController : BaseApiController
 
     [HttpGet("syncdata", Name = "SyncData")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
-    [ProducesResponseType(typeof(ProductCategoriesRootObjectDto), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ProductsRootObjectDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)

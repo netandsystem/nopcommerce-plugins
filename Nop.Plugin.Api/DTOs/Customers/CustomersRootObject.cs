@@ -2,26 +2,25 @@
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-namespace Nop.Plugin.Api.DTO.Customers
+namespace Nop.Plugin.Api.DTO.Customers;
+
+public class CustomersRootObject : ISerializableObject
 {
-    public class CustomersRootObject : ISerializableObject
+    public CustomersRootObject()
     {
-        public CustomersRootObject()
-        {
-            Customers = new List<CustomerDto>();
-        }
+        Customers = new List<CustomerDto>();
+    }
 
-        [JsonProperty("customers")]
-        public IList<CustomerDto> Customers { get; set; }
+    [JsonProperty("customers")]
+    public IList<CustomerDto> Customers { get; set; }
 
-        public string GetPrimaryPropertyName()
-        {
-            return "customers";
-        }
+    public string GetPrimaryPropertyName()
+    {
+        return "customers";
+    }
 
-        public Type GetPrimaryPropertyType()
-        {
-            return typeof(CustomerDto);
-        }
+    public Type GetPrimaryPropertyType()
+    {
+        return typeof(CustomerDto);
     }
 }

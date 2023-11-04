@@ -161,7 +161,40 @@ public class CustomersController : BaseApiController
     #endregion
 
     #region Methods
-    
+
+    /// <summary>
+    ///     Retrieve current customer
+    /// </summary>
+    /// <param name="fields">Fields from the customer you want your json to contain</param>
+    /// <response code="200">OK</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpGet("syncdata", Name = "SyncData")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    //[GetRequestsErrorInterceptorActionFilter]
+    public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)
+    {
+        var sellerEntity = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (sellerEntity is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var customerRootObject = new CustomersRootObject
+        {
+            Customers = await _customerApiService.GetLastestUpdatedCustomersBySellerAsync(
+                sellerEntity,
+                lastUpdateUtc
+            )
+        };
+
+        return OkResult(customerRootObject, fields);
+    }
+
 
     /// <summary>
     ///     Retrieve current customer

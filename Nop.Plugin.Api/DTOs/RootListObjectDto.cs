@@ -16,16 +16,16 @@ public class RootListObjectDto<TDto> : ISerializableObject
     [JsonProperty("content")]
     public readonly IList<TDto> Content;
 
-    [JsonProperty("has_next_page")]
+    [JsonProperty("hasNextPage")]
     public readonly bool HasNextPage;
 
     [JsonProperty("count")]
     public readonly int Count;
 
-    [JsonProperty("first_id")]
+    [JsonProperty("firstId")]
     public readonly int FirstId;
 
-    [JsonProperty("last_id")]
+    [JsonProperty("lastId")]
     public readonly int LastId;
 
     public RootListObjectDto(IPagedList<TDto> content)

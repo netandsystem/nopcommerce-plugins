@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Nop.Plugin.Api.Attributes;
 using Nop.Plugin.Api.DTO.Base;
 using Nop.Plugin.Api.DTO.ShoppingCarts;
+using System;
 
 #nullable enable
 
@@ -25,6 +26,24 @@ public class CustomerDto: BaseDto
 
     [JsonProperty("last_name", Required = Required.Always)]
     public string LastName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the vendor identifier with which this customer is associated (maganer)
+    /// </summary>
+    [JsonProperty("vendor_id")]
+    public int VendorId { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the customer has been deleted
+    /// </summary>
+    [JsonProperty("deleted")]
+    public bool Deleted { get; set; }
+
+    /// <summary>
+    /// Gets or sets the date and time of entity creation
+    /// </summary>
+    [JsonProperty("updated_on_utc")]
+    public DateTime CreatedOnUtc { get; set; }
 
     #region Navigation properties
 
@@ -63,6 +82,12 @@ public class CustomerDto: BaseDto
     /// </summary>
     [JsonProperty("phone")]
     public string? Phone { get; set; } = null;
+
+    /// <summary>
+    /// Gets or sets the email
+    /// </summary>
+    [JsonProperty("email")]
+    public string? Email { get; set; }
 
 
 
