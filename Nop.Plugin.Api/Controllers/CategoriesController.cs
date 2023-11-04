@@ -3,16 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Media;
 using Nop.Plugin.Api.Attributes;
 using Nop.Plugin.Api.Authorization.Attributes;
+using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Plugin.Api.Delta;
 using Nop.Plugin.Api.DTO.Categories;
 using Nop.Plugin.Api.DTO.Errors;
 using Nop.Plugin.Api.DTO.Images;
+using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.Factories;
 using Nop.Plugin.Api.Helpers;
 using Nop.Plugin.Api.Infrastructure;
@@ -35,11 +38,15 @@ namespace Nop.Plugin.Api.Controllers;
 
 public class CategoriesController : BaseApiController
 {
+    #region Fields
     private readonly ICategoryApiService _categoryApiService;
     private readonly ICategoryService _categoryService;
     private readonly IDTOHelper _dtoHelper;
     private readonly IFactory<Category> _factory;
     private readonly IUrlRecordService _urlRecordService;
+    #endregion
+
+    #region Ctr
 
     public CategoriesController(
         ICategoryApiService categoryApiService,
@@ -63,6 +70,25 @@ public class CategoriesController : BaseApiController
         _urlRecordService = urlRecordService;
         _factory = factory;
         _dtoHelper = dtoHelper;
+    }
+
+    #endregion
+
+    [HttpGet("syncdata", Name = "SyncCategories")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(CategoriesRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)
+    {
+        var result = await _categoryApiService.GetLastestUpdatedCategoriesAsync(lastUpdateUtc);
+
+        var rootObject = new CategoriesRootObject()
+        {
+            Categories = result
+        };
+
+        return OkResult(rootObject, fields);
     }
 
     /// <summary>

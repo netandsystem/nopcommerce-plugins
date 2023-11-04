@@ -168,7 +168,7 @@ public class CustomersController : BaseApiController
     /// <param name="fields">Fields from the customer you want your json to contain</param>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
-    [HttpGet("syncdata", Name = "SyncData")]
+    [HttpGet("syncdata", Name = "SyncCustomers")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]

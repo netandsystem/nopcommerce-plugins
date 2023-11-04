@@ -342,7 +342,7 @@ public class ProductsController : BaseApiController
     }
 
 
-    [HttpGet("syncdata", Name = "SyncData")]
+    [HttpGet("syncdata", Name = "SyncProducts")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(ProductsRootObjectDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
