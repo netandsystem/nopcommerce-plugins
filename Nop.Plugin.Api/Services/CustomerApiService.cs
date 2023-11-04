@@ -285,8 +285,7 @@ public class CustomerApiService : ICustomerApiService
     )
     {
         var query = from customer in _customerRepository.Table
-                    where   customer.VendorId == seller.Id &&
-                            (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
+                    where  (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
                     select customer.ToDto();
 
         return await query.ToListAsync();
