@@ -36,6 +36,7 @@ using Nop.Services.Stores;
 
 namespace Nop.Plugin.Api.Controllers;
 
+[Route("api/categories")]
 public class CategoriesController : BaseApiController
 {
     #region Fields
@@ -97,8 +98,7 @@ public class CategoriesController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
-    [HttpGet]
-    [Route("/api/categories", Name = "GetCategories")]
+    [HttpGet(Name = "GetCategories")]
     [ProducesResponseType(typeof(CategoriesRootObject), (int) HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.BadRequest)]
     [GetRequestsErrorInterceptorActionFilter]
@@ -137,8 +137,7 @@ public class CategoriesController : BaseApiController
     /// </summary>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
-    [HttpGet]
-    [Route("/api/categories/count", Name = "GetCategoriesCount")]
+    [HttpGet("count", Name = "GetCategoriesCount")]
     [ProducesResponseType(typeof(CategoriesCountRootObject), (int) HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int) HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.BadRequest)]
@@ -165,8 +164,7 @@ public class CategoriesController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="404">Not Found</response>
     /// <response code="401">Unauthorized</response>
-    [HttpGet]
-    [Route("/api/categories/{id}", Name = "GetCategoryById")]
+    [HttpGet("{id}", Name = "GetCategoryById")]
     [ProducesResponseType(typeof(CategoriesRootObject), (int) HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.NotFound)]
