@@ -63,7 +63,6 @@ public class ProductApiService : IProductApiService
     protected readonly IRepository<LocalizedProperty> _localizedPropertyRepository;
     protected readonly IRepository<ProductAttributeCombination> _productAttributeCombinationRepository;
     protected readonly IRepository<ProductAttributeMapping> _productAttributeMappingRepository;
-    protected readonly IRepository<ProductCategory> _productCategoryRepository;
     protected readonly IRepository<ProductManufacturer> _productManufacturerRepository;
     protected readonly IRepository<ProductPicture> _productPictureRepository;
     protected readonly IRepository<ProductProductTagMapping> _productTagMappingRepository;
@@ -116,7 +115,6 @@ public class ProductApiService : IProductApiService
         IRepository<LocalizedProperty> localizedPropertyRepository,
         IRepository<ProductAttributeCombination> productAttributeCombinationRepository,
         IRepository<ProductAttributeMapping> productAttributeMappingRepository,
-        IRepository<ProductCategory> productCategoryRepository,
         IRepository<ProductManufacturer> productManufacturerRepository,
         IRepository<ProductPicture> productPictureRepository,
         IRepository<ProductProductTagMapping> productTagMappingRepository,
@@ -167,7 +165,6 @@ public class ProductApiService : IProductApiService
         _localizedPropertyRepository = localizedPropertyRepository;
         _productAttributeCombinationRepository = productAttributeCombinationRepository;
         _productAttributeMappingRepository = productAttributeMappingRepository;
-        _productCategoryRepository = productCategoryRepository;
         _productManufacturerRepository = productManufacturerRepository;
         _productPictureRepository = productPictureRepository;
         _productTagMappingRepository = productTagMappingRepository;
@@ -386,6 +383,23 @@ public class ProductApiService : IProductApiService
         var query = from product in _productRepository.Table
                     where lastUpdateUtc == null || product.UpdatedOnUtc > lastUpdateUtc
                     select product;
+
+        return await query.ToListAsync();
+    }
+
+    private  ProductDto JoinProductWithCategoryIds(ProductDto productDto, List<int> categoryIds)
+    {
+        productDto.CategoryIds = categoryIds;
+
+        return productDto;
+    }
+
+    public async Task<List<ProductDto>> JoinProductsAndCategoriesAsync(IList<ProductDto> products)
+    {
+        var query = from product in products
+                    join productCategory in _productCategoryMappingRepository.Table 
+                    on product.Id equals productCategory.ProductId into CategoryGroup
+                    select JoinProductWithCategoryIds(product, CategoryGroup.Select(x => x.CategoryId).ToList());
 
         return await query.ToListAsync();
     }

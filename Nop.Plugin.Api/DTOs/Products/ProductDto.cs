@@ -82,4 +82,10 @@ public class ProductDto : BaseDto
     /// </summary>
     [JsonProperty("published")]
     public bool Published { get; set; }
+
+    /// <summary>
+    /// Product Category
+    /// </summary>
+    [JsonProperty("category_ids")]
+    public List<int> CategoryIds { get; set; }
 }

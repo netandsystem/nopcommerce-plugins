@@ -50,4 +50,7 @@ public interface IProductApiService
     Task<List<Product>> GetLastestUpdatedProducts(
         DateTime? lastUpdateUtc
     );
+
+    Task<List<ProductDto>> JoinProductsAndCategoriesAsync(IList<ProductDto> products);
+
 }

@@ -353,6 +353,8 @@ public class ProductsController : BaseApiController
 
         var result = await _productApiService.JoinProductsAndPicturesAsync(products);
 
+        result = await _productApiService.JoinProductsAndCategoriesAsync(result);
+
         var productsRootObject = new ProductsRootObjectDto
         {
             Products = result
