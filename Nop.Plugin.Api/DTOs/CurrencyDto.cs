@@ -26,6 +26,12 @@ public class CurrencyDto : BaseDto
 
     [JsonProperty("rounding_type")]
     public RoundingType RoundingType { get; set; }
+
+    /// <summary>
+    /// Gets or sets the date and time of instance update
+    /// </summary>
+    [JsonProperty("updated_on_utc")]
+    public DateTime UpdatedOnUtc { get; set; }
 }
 
 [JsonConverter(typeof(StringEnumConverter))]
