@@ -319,8 +319,8 @@ public class CustomerApiService : ICustomerApiService
                         on customer.Id equals customerRoleMap.CustomerId
                         into customerRoleList
                     where (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
-                        && customerRoleList.Any(r => r.Id == registeredRole.Id)
-                        && customerRoleList.All(r => r.Id != sellerRole.Id)
+                        && customerRoleList.Any(r => r.CustomerRoleId == registeredRole.Id)
+                        && customerRoleList.All(r => r.CustomerRoleId != sellerRole.Id)
                     select customer.ToDto();
 
         return await query.ToListAsync();
