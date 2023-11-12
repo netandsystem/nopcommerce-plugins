@@ -89,6 +89,12 @@ public class CustomerDto: BaseDto
     [JsonProperty("email")]
     public string? Email { get; set; }
 
+    /// <summary>
+    /// Gets or sets the associated seller
+    /// </summary>
+    [JsonProperty("seller_id")]
+    public int? SellerId { get; set; }
+
 
 
     #endregion

@@ -59,4 +59,8 @@ public interface ICustomerApiService
         Customer seller,
         DateTime? lastUpdateUtc
     );
+
+    Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
+        DateTime? lastUpdateUtc
+    );
 }

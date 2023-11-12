@@ -57,6 +57,9 @@ public class CustomerApiService : ICustomerApiService
     private readonly IRepository<NewsLetterSubscription> _subscriptionRepository;
     private readonly ICustomerService _customerService;
 
+    private readonly IRepository<CustomerRole> _customerRoleRepository;
+    private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
+
     #endregion
 
     #region Ctr
@@ -71,7 +74,9 @@ public class CustomerApiService : ICustomerApiService
         IAddressApiService addressApiService,
         IGenericAttributeService genericAttributeService,
         ICurrencyService currencyService,
-        ICustomerService customerService
+        ICustomerService customerService,
+        IRepository<CustomerRole> customerRoleRepository,
+        IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository
     )
     {
         _customerRepository = customerRepository;
@@ -85,7 +90,9 @@ public class CustomerApiService : ICustomerApiService
 		_genericAttributeService = genericAttributeService;
 		_currencyService = currencyService;
         _customerService = customerService;
-	}
+        _customerRoleRepository = customerRoleRepository;
+        _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
+    }
 
     #endregion
 
@@ -284,8 +291,36 @@ public class CustomerApiService : ICustomerApiService
         DateTime? lastUpdateUtc
     )
     {
+        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync("Registered");
+        var sellerRole = await _customerService.GetCustomerRoleBySystemNameAsync("Seller");
+
         var query = from customer in _customerRepository.Table
+                    join customerRoleMap in _customerCustomerRoleMappingRepository.Table
+                        on customer.Id equals customerRoleMap.CustomerId
+                        into customerRoleList
                     where  (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
+                        && customerRoleList.Any(r => r.Id == registeredRole.Id)
+                        && customerRoleList.All(r => r.Id != sellerRole.Id)
+                        && customer.SellerId == seller.Id
+                    select customer.ToDto();
+
+        return await query.ToListAsync();
+    }
+
+    public async Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
+        DateTime? lastUpdateUtc
+    )
+    {
+        var sellerRole = await _customerService.GetCustomerRoleBySystemNameAsync("Seller");
+        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync("Registered");
+
+        var query = from customer in _customerRepository.Table
+                    join customerRoleMap in _customerCustomerRoleMappingRepository.Table
+                        on customer.Id equals customerRoleMap.CustomerId
+                        into customerRoleList
+                    where (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
+                        && customerRoleList.Any(r => r.Id == registeredRole.Id)
+                        && customerRoleList.All(r => r.Id != sellerRole.Id)
                     select customer.ToDto();
 
         return await query.ToListAsync();

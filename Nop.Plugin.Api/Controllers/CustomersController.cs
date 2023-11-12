@@ -186,8 +186,7 @@ public class CustomersController : BaseApiController
 
         var customerRootObject = new CustomersRootObject
         {
-            Customers = await _customerApiService.GetLastestUpdatedCustomersBySellerAsync(
-                sellerEntity,
+            Customers = await _customerApiService.GetLastestUpdatedCustomersAsync(
                 lastUpdateUtc
             )
         };
