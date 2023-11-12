@@ -63,4 +63,6 @@ public interface ICustomerApiService
     Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
         DateTime? lastUpdateUtc
     );
+
+    Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers);
 }

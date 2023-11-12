@@ -184,11 +184,15 @@ public class CustomersController : BaseApiController
             return Error(HttpStatusCode.Unauthorized);
         }
 
+        var result = await _customerApiService.GetLastestUpdatedCustomersAsync(
+                lastUpdateUtc
+            );
+
+        result = await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(result);
+
         var customerRootObject = new CustomersRootObject
         {
-            Customers = await _customerApiService.GetLastestUpdatedCustomersAsync(
-                lastUpdateUtc
-            )
+            Customers = result
         };
 
         return OkResult(customerRootObject, fields);

@@ -25,6 +25,7 @@ using Nop.Core.Domain.Localization;
 using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Core.Domain.Catalog;
+using System.Text;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -279,7 +280,62 @@ public class CustomerApiService : ICustomerApiService
         return customerDto;
     }
 
-    #nullable enable
+#nullable enable
+
+    private string CamelCase2SnakeCase(string input)
+    {
+        StringBuilder resultado = new();
+
+        // Agrega el primer carácter en minúsculas
+        resultado.Append(char.ToLower(input[0]));
+
+        // Recorre el resto de la cadena
+        for (int i = 1; i < input.Length; i++)
+        {
+            // Si el carácter actual es una letra mayúscula, agrega un guion bajo seguido de la letra en minúsculas
+            if (char.IsUpper(input[i]))
+            {
+                resultado.Append('_');
+                resultado.Append(char.ToLower(input[i]));
+            }
+            else
+            {
+                // Si el carácter no es una letra mayúscula, simplemente agrégalo al resultado
+                resultado.Append(input[i]);
+            }
+        }
+
+        return resultado.ToString();
+    }
+
+    private CustomerDto AddAttributesToCustomerDto(CustomerDto customer, IList<GenericAttribute> attributes)
+    {
+        customer.Attributes = null;
+
+        if (attributes.Count > 0) 
+        {
+            customer.Attributes = new();
+
+            foreach (var attribute in attributes)
+            {
+                customer.Attributes[CamelCase2SnakeCase(attribute.Key)] = attribute.Value;
+            }
+            
+        }
+        
+        return customer;
+    }
+
+    public async Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers)
+    {
+        var query = from customer in customers
+                    join attribute in _genericAttributeRepository.Table
+                        on customer.Id equals attribute.EntityId
+                        into attributesList
+                    select AddAttributesToCustomerDto(customer, attributesList.ToList());
+
+        return await query.ToListAsync();
+    }
 
     public async Task<Address?> GetCustomerAddressAsync(int customerId, int addressId)
     {

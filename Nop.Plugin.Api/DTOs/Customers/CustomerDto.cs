@@ -45,6 +45,12 @@ public class CustomerDto: BaseDto
     [JsonProperty("updated_on_utc")]
     public DateTime CreatedOnUtc { get; set; }
 
+    /// <summary>
+    /// Gets or sets the date and time of entity creation
+    /// </summary>
+    [JsonProperty("attributes")]
+    public Dictionary<string, string>? Attributes { get; set; }
+
     #region Navigation properties
 
     /// <summary>
