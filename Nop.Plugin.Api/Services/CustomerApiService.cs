@@ -60,6 +60,8 @@ public class CustomerApiService : ICustomerApiService
 
     private readonly IRepository<CustomerRole> _customerRoleRepository;
     private readonly IRepository<CustomerCustomerRoleMapping> _customerCustomerRoleMappingRepository;
+    private readonly IRepository<Address> _addressRepository;
+    private readonly IRepository<CustomerAddressMapping> _customerAddressMappingRepository;
 
     #endregion
 
@@ -77,7 +79,9 @@ public class CustomerApiService : ICustomerApiService
         ICurrencyService currencyService,
         ICustomerService customerService,
         IRepository<CustomerRole> customerRoleRepository,
-        IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository
+        IRepository<CustomerCustomerRoleMapping> customerCustomerRoleMappingRepository,
+        IRepository<Address> addressRepository,
+        IRepository<CustomerAddressMapping> customerAddressMappingRepository
     )
     {
         _customerRepository = customerRepository;
@@ -93,6 +97,8 @@ public class CustomerApiService : ICustomerApiService
         _customerService = customerService;
         _customerRoleRepository = customerRoleRepository;
         _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
+        _addressRepository = addressRepository;
+        _customerAddressMappingRepository = customerAddressMappingRepository;
     }
 
     #endregion
@@ -280,7 +286,7 @@ public class CustomerApiService : ICustomerApiService
         return customerDto;
     }
 
-#nullable enable
+    #nullable enable
 
     private string CamelCase2SnakeCase(string input)
     {
@@ -358,9 +364,13 @@ public class CustomerApiService : ICustomerApiService
                         && customerRoleList.Any(r => r.Id == registeredRole.Id)
                         && customerRoleList.All(r => r.Id != sellerRole.Id)
                         && customer.SellerId == seller.Id
-                    select customer.ToDto();
+                    select customer;
 
-        return await query.ToListAsync();
+        var customers = await query.ToListAsync();
+
+        var customersDto = await JoinCustomersWithAddressesAsync(customers);
+
+        return customersDto;
     }
 
     public async Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
@@ -377,12 +387,30 @@ public class CustomerApiService : ICustomerApiService
                     where (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
                         && customerRoleList.Any(r => r.CustomerRoleId == registeredRole.Id)
                         && customerRoleList.All(r => r.CustomerRoleId != sellerRole.Id)
-                    select customer.ToDto();
+                    select customer;
+
+        var customers = await query.ToListAsync();
+
+        var customersDto = await JoinCustomersWithAddressesAsync(customers);
+
+        return customersDto;
+    }
+
+    public async Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers)
+    {
+        var query = from customer in customers
+                    join customerAddressMap in _customerAddressMappingRepository.Table
+                        on customer.Id equals customerAddressMap.CustomerId
+                    join address in _addressRepository.Table
+                        on customerAddressMap.AddressId equals address.Id
+                        into addressList
+                    select AddAddressesToCustomerDto(customer, addressList.ToList());
 
         return await query.ToListAsync();
     }
 
-#nullable disable
+    #nullable disable
+
     #endregion
 
     #region Private Methods
@@ -676,7 +704,7 @@ public class CustomerApiService : ICustomerApiService
         
     }
 
-		public async Task<Language> GetCustomerLanguageAsync(Customer customer)
+	public async Task<Language> GetCustomerLanguageAsync(Customer customer)
 		{
         //var store = await _storeContext.GetCurrentStoreAsync();
 
@@ -719,8 +747,8 @@ public class CustomerApiService : ICustomerApiService
         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.LanguageIdAttribute, language?.Id ?? 0/*, store.Id*/);
     }
 
-		public async Task<Currency> GetCustomerCurrencyAsync(Customer customer)
-		{
+	public async Task<Currency> GetCustomerCurrencyAsync(Customer customer)
+	{
         //var store = await _storeContext.GetCurrentStoreAsync();
 
         //find a currency previously selected by a customer
@@ -757,10 +785,37 @@ public class CustomerApiService : ICustomerApiService
         //return customerCurrency;
     }
 
-		public async Task SetCustomerCurrencyAsync(Customer customer, Currency currency)
-		{
+	public async Task SetCustomerCurrencyAsync(Customer customer, Currency currency)
+	{
         //var store = await _storeContext.GetCurrentStoreAsync();
         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CurrencyIdAttribute, currency?.Id ?? 0/*, store.Id*/);
+    }
+
+    #nullable enable
+    private CustomerDto AddAddressesToCustomerDto(Customer customer, IList<Address> addresses)
+    {
+        var customerDto = customer.ToDto();
+
+        customerDto.Addresses = addresses.Select(address => address.ToDto()).ToList();
+
+        customerDto.BillingAddress = addresses.FirstOrDefault(address => address.Id == customer.BillingAddressId).ToDto();
+
+        customerDto.ShippingAddress = addresses.FirstOrDefault(address => address.Id == customer.ShippingAddressId).ToDto();
+
+        return customerDto;
+    }
+
+    public IQueryable<CustomerDto> GetCustomersWithAddressesQuery(IQueryable<Customer> customers)
+    {
+        var query = from customer in customers
+                    join customerAddressMap in _customerAddressMappingRepository.Table
+                        on customer.Id equals customerAddressMap.CustomerId
+                    join address in _addressRepository.Table
+                        on customerAddressMap.AddressId equals address.Id
+                        into addressList
+                    select AddAddressesToCustomerDto(customer, addressList.ToList());
+
+        return query;
     }
 
     #endregion

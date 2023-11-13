@@ -7,6 +7,7 @@ using Nop.Core.Domain.Shipping;
 using Nop.Plugin.Api.DTO.Base;
 using Nop.Plugin.Api.DTO.OrderItems;
 using Newtonsoft.Json.Converters;
+using Nop.Plugin.Api.DTOs.ShoppingCarts;
 
 namespace Nop.Plugin.Api.DTO.Orders;
 
@@ -41,16 +42,27 @@ public class OrderPost
     /// <summary>
     ///     Gets or sets the serialized CustomValues (values from ProcessPaymentRequest)
     /// </summary>
-    [JsonProperty("payment_data", Required = Required.Always)]
+    [JsonProperty("payment_data", Required = Required.AllowNull)]
     public PaymentData? PaymentData { get; set; }
 
     /// <summary>
     ///     Gets or sets the billing address
     /// </summary>
-    //[JsonProperty("billing_address", Required = Required.Always)]
     [JsonProperty("billing_address_id", Required = Required.Always)]
     public int? BillingAddressId { get; set; }
 
+
+    /// <summary>
+    ///     Gets or sets the order's items
+    /// </summary>
+    [JsonProperty("order_items", Required = Required.AllowNull)]
+    public List<ShoppingCartItemPost>? OrderItems { get; set; }
+
+    /// <summary>
+    ///     Gets or sets the billing address
+    /// </summary>
+    [JsonProperty("custom_values_xml", Required = Required.AllowNull)]
+    public Dictionary<string, object>? CustomValuesXml { get; set; }
 }
 
 public record PaymentData

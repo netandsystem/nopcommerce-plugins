@@ -49,17 +49,19 @@ using FluentMigrator.Runner.Processors.Firebird;
 using Nop.Core.Domain.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
+using Nop.Core.Domain.News;
 
 namespace Nop.Plugin.Api.Controllers;
 
 #nullable enable
 
 [Route("api/orders")]
-[Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
 public class OrdersController : BaseApiController
 {
     #region Fields
 
+    private const string GENERAL_ERROR_HEADER = "orders_items";
+    private const string BATCH_ERROR_HEADER = "orders_items";
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly IOrderApiService _orderApiService;
     private readonly IOrderProcessingService _orderProcessingService;
@@ -76,6 +78,7 @@ public class OrdersController : BaseApiController
     private readonly ITaxPluginManager _taxPluginManager;
     private readonly IShoppingCartItemApiService _shoppingCartItemApiService;
     private readonly ICustomerApiService _customerApiService;
+    private readonly OrderSettings _orderSettings;
 
 
     // We resolve the order settings this way because of the tests.
@@ -110,7 +113,9 @@ public class OrdersController : BaseApiController
         IAuthenticationService authenticationService,
         ITaxPluginManager taxPluginManager,
         IShoppingCartItemApiService shoppingCartItemApiService,
-        ICustomerApiService customerApiService)
+        ICustomerApiService customerApiService,
+        OrderSettings orderSettings
+        )
         : base(jsonFieldsSerializer, aclService, customerService, storeMappingService,
                storeService, discountService, customerActivityService, localizationService, pictureService)
     {
@@ -130,6 +135,7 @@ public class OrdersController : BaseApiController
         _taxPluginManager = taxPluginManager;
         _shoppingCartItemApiService = shoppingCartItemApiService;
         _customerApiService = customerApiService;
+        _orderSettings = orderSettings;
     }
 
     #endregion
@@ -143,6 +149,7 @@ public class OrdersController : BaseApiController
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
     [HttpGet(Name = "GetOrders")]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
@@ -173,16 +180,16 @@ public class OrdersController : BaseApiController
         var storeId = _storeContext.GetCurrentStore().Id;
 
         IList<OrderDto> ordersDto = await _orderApiService.GetOrders(
-                customer.Id,
-                parameters.Limit,
-                parameters.Page,
-                parameters.Status,
-                parameters.PaymentStatus,
-                parameters.ShippingStatus,
-                storeId,
-                parameters.OrderByDateDesc,
-                parameters.CreatedAtMin,
-                parameters.CreatedAtMax
+                customerId: customer.Id,
+                limit: parameters.Limit,
+                page: parameters.Page,
+                status: parameters.Status,
+                paymentStatus: parameters.PaymentStatus,
+                shippingStatus: parameters.ShippingStatus,
+                storeId: storeId,
+                orderByDateDesc: parameters.OrderByDateDesc,
+                createdAtMin: parameters.CreatedAtMin,
+                createdAtMax: parameters.CreatedAtMax
             );
 
         var ordersRootObject = new OrdersRootObject
@@ -190,7 +197,66 @@ public class OrdersController : BaseApiController
             Orders = ordersDto
         };
 
-        return OkResult( ordersRootObject, parameters.Fields);
+        return OkResult(ordersRootObject, parameters.Fields);
+    }
+
+    /// <summary>
+    ///     Receive a list of all Orders
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpGet("seller",Name = "GetOrdersBySellerId")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> GetOrdersBySellerId([FromQuery] OrdersParametersModel parameters)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        //if (!await CheckPermissions(seller.Id))
+        //{
+        //    return AccessDenied();
+        //}
+
+        if (parameters.Page < Constants.Configurations.DefaultPageValue)
+        {
+            return Error(HttpStatusCode.BadRequest, "page", "Invalid page parameter");
+        }
+
+        if (parameters.Limit < Constants.Configurations.MinLimit || parameters.Limit > Constants.Configurations.MaxLimit)
+        {
+            return Error(HttpStatusCode.BadRequest, "limit", "Invalid limit parameter");
+        }
+
+        var storeId = _storeContext.GetCurrentStore().Id;
+
+        IList<OrderDto> ordersDto = await _orderApiService.GetOrders(
+                customerId: parameters.CustomerId,
+                limit: parameters.Limit,
+                page: parameters.Page,
+                status: parameters.Status,
+                paymentStatus: parameters.PaymentStatus,
+                shippingStatus: parameters.ShippingStatus,
+                storeId: storeId,
+                orderByDateDesc: parameters.OrderByDateDesc,
+                createdAtMin: parameters.CreatedAtMin,
+                createdAtMax: parameters.CreatedAtMax,
+                sellerId: seller.Id
+            );
+
+        var ordersRootObject = new OrdersRootObject
+        {
+            Orders = ordersDto
+        };
+
+        return OkResult(ordersRootObject, parameters.Fields);
     }
 
     /// <summary>
@@ -200,6 +266,7 @@ public class OrdersController : BaseApiController
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
     [HttpPost(Name = "PlaceOrder")]
+    [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -253,7 +320,7 @@ public class OrdersController : BaseApiController
         while(cart.Any())
         {
             //Get a cart section
-            List<ShoppingCartItem> cartSection = cart.Take(3).ToList();
+            List<ShoppingCartItem> cartSection = cart.Take(_orderSettings.MaxItemsPerOrder).ToList();
 
             cart.RemoveAll(item => cartSection.Any(item2Delete => item.Id == item2Delete.Id));
 
@@ -279,10 +346,118 @@ public class OrdersController : BaseApiController
         return OkResult(ordersIdRootObject);
     }
 
+    /// <summary>
+    ///     Place an order
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpPost("seller/{id}",Name = "PlaceOrderWithCustomer")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> PlaceOrderWithCustomer([FromBody] OrderPost newOrderPost, [FromRoute] int id)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var customer = await _customerApiService.GetCustomerEntityByIdAsync(id);
+
+        if (customer is null) 
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "non-existing customer");
+        }
+
+        if (!IsCustomerRelatedToSeller(seller, customer))
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "the customer is not related to this seller");
+        }
+
+        int billingAddressId = newOrderPost.BillingAddressId ?? 0;
+
+        if (billingAddressId == 0)
+        {
+            return Error(HttpStatusCode.BadRequest, "billingAddress", "non-existing billing address");
+        }
+
+        var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
+
+        if (addressValidation is null)
+        {
+            return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
+        }
+
+        if (newOrderPost.OrderItems is null)
+        {
+            return Error(HttpStatusCode.BadRequest, "order_items", "the order_items field cannot be null");
+        }
+
+        var store = _storeContext.GetCurrentStore();
+
+        var warnings = await _shoppingCartItemApiService.ReplaceCartAsync(customer, newOrderPost.OrderItems, store.Id);
+
+        var error = GetWarningBatchErrors(warnings);
+        if (error is not null) return error;
+
+
+        List<ShoppingCartItem> cart = await _shoppingCartItemApiService.GetShoppingCartItemsAsync(customerId: customer.Id, shoppingCartType: ShoppingCartType.ShoppingCart);
+
+
+        customer.BillingAddressId = billingAddressId;
+        customer.ShippingAddressId = billingAddressId;
+
+        await CustomerService.UpdateCustomerAsync(customer); // update billing and shipping addresses
+
+        int storeId = _storeContext.GetCurrentStore().Id;
+
+        //Empty cart
+        await _shoppingCartItemApiService.EmptyCartAsync(customerId: customer.Id, shoppingCartType: ShoppingCartType.ShoppingCart);
+
+        OrdersIdRootObject ordersIdRootObject = new();
+
+        while (cart.Any())
+        {
+            //Get a cart section
+            List<ShoppingCartItem> cartSection = cart.Take(_orderSettings.MaxItemsPerOrder).ToList();
+
+            cart.RemoveAll(item => cartSection.Any(item2Delete => item.Id == item2Delete.Id));
+
+            await _shoppingCartItemApiService.AddShoppingCartItemsToCartAsync(cartSection);
+
+            var placeOrderResult = await _orderApiService.PlaceOrderAsync(newOrderPost, customer, storeId, cartSection);
+
+            if (!placeOrderResult.Success)
+            {
+                foreach (var placeOrdererror in placeOrderResult.Errors)
+                {
+                    ModelState.AddModelError("order_placement", placeOrdererror);
+                }
+
+                return Error(HttpStatusCode.BadRequest);
+            }
+
+            await CustomerActivityService.InsertActivityAsync("AddNewOrder", await LocalizationService.GetResourceAsync("ActivityLog.AddNewOrder"), placeOrderResult.PlacedOrder);
+
+            ordersIdRootObject.Orders.Add(placeOrderResult.PlacedOrder.Id);
+        }
+
+        return OkResult(ordersIdRootObject);
+    }
+
     #endregion
 
     #region Private methods
     //private OrderSettings OrderSettings => _orderSettings ?? (_orderSettings = EngineContext.Current.Resolve<OrderSettings>());
+
+    private bool IsCustomerRelatedToSeller(Customer seller, Customer customer)
+    {
+        return customer.SellerId == seller.Id;
+    }
 
     private async Task<bool> CheckPermissions(int? customerId)
     {
@@ -298,6 +473,27 @@ public class OrdersController : BaseApiController
         }
 
         return false;
+    }
+
+    private IActionResult? GetWarningBatchErrors(IList<string>? warnings)
+    {
+        if (warnings is not null && warnings.Any())
+        {
+            if (!warnings.All(w => w.Contains(':')))
+            {
+                ModelState.AddModelError(GENERAL_ERROR_HEADER, warnings[0]);
+                return Error(HttpStatusCode.BadRequest);
+            }
+
+            foreach (var warning in warnings)
+            {
+                ModelState.AddModelError(BATCH_ERROR_HEADER, warning);
+            }
+
+            return Error(HttpStatusCode.BadRequest);
+        }
+
+        return null;
     }
 
     /*

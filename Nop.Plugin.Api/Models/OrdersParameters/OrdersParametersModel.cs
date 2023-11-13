@@ -41,4 +41,10 @@ public class OrdersParametersModel : BaseOrdersParametersModel
     /// </summary>
     [JsonProperty("order_by_date_desc")]
     public bool OrderByDateDesc { get; set; }
+
+    /// <summary>
+    ///     Order customer
+    /// </summary>
+    [JsonProperty("customer_id")]
+    public int? CustomerId { get; set; }
 }

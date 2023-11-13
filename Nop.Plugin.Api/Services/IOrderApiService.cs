@@ -14,7 +14,7 @@ namespace Nop.Plugin.Api.Services;
 public interface IOrderApiService
 {
     Task<List<OrderDto>> GetOrders(
-        int customerId,
+        int? customerId,
         int? limit,
         int? page,
         OrderStatus? status,
@@ -23,7 +23,8 @@ public interface IOrderApiService
         int? storeId,
         bool orderByDateDesc,
         DateTime? createdAtMin,
-        DateTime? createdAtMax
+        DateTime? createdAtMax,
+        int? sellerId = null
     );
 
     Task<PlaceOrderResult> PlaceOrderAsync(OrderPost newOrder, Customer customer, int storeId, IList<ShoppingCartItem> cart);

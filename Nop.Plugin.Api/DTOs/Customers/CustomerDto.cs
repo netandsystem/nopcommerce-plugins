@@ -60,6 +60,12 @@ public class CustomerDto: BaseDto
     public AddressDto? BillingAddress { get; set; }
 
     /// <summary>
+    ///     Default billing address
+    /// </summary>
+    [JsonProperty("shipping_address")]
+    public AddressDto? ShippingAddress { get; set; }
+
+    /// <summary>
     ///     Gets or sets customer addresses
     /// </summary>
     [JsonProperty("addresses")]

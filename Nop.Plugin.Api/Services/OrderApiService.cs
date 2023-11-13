@@ -37,6 +37,7 @@ public class OrderApiService : IOrderApiService
     private readonly IRepository<OrderItem> _orderItemRepository;
     private readonly IRepository<Address> _addressRepository;
     private readonly IRepository<Product> _productRepository;
+    private readonly IRepository<Customer> _customerRepository;
     private readonly IProductApiService _productApiService;
     private readonly IOrderProcessingService _orderProcessingService;
     private readonly IPaymentService _paymentService;
@@ -45,7 +46,6 @@ public class OrderApiService : IOrderApiService
     private readonly ICustomerService _customerService;
     private readonly ShippingSettings _shippingSettings;
     private readonly ILocalizationService _localizationService;
-
 
     #endregion
 
@@ -63,7 +63,8 @@ public class OrderApiService : IOrderApiService
         IShippingService shippingService,
         ICustomerService customerService,
         ShippingSettings shippingSettings,
-        ILocalizationService localizationService
+        ILocalizationService localizationService,
+        IRepository<Customer> customerRepository
     )
     {
         _orderRepository = orderRepository;
@@ -78,6 +79,7 @@ public class OrderApiService : IOrderApiService
         _customerService = customerService;
         _shippingSettings = shippingSettings;
         _localizationService = localizationService;
+        _customerRepository = customerRepository;
     }
 
     #endregion
@@ -85,7 +87,7 @@ public class OrderApiService : IOrderApiService
     #region Methods
 
     public async Task<List<OrderDto>> GetOrders(
-        int customerId, 
+        int? customerId, 
         int? limit, 
         int? page,
         OrderStatus? status, 
@@ -94,7 +96,8 @@ public class OrderApiService : IOrderApiService
         int? storeId, 
         bool orderByDateDesc,
         DateTime? createdAtMin,
-        DateTime? createdAtMax
+        DateTime? createdAtMax,
+        int? sellerId = null
     )
     {
         int limitValue = limit ?? Constants.Configurations.DefaultLimit;
@@ -108,7 +111,8 @@ public class OrderApiService : IOrderApiService
                 paymentStatus: paymentStatus,
                 shippingStatus: shippingStatus,
                 storeId: storeId,
-                orderByDateDesc: orderByDateDesc
+                orderByDateDesc: orderByDateDesc,
+                sellerId: sellerId
             );
 
         var ordersItemQuery = from order in ordersQuery
@@ -162,12 +166,12 @@ public class OrderApiService : IOrderApiService
 
     public async Task<PlaceOrderResult> PlaceOrderAsync(OrderPost newOrder, Customer customer, int storeId, IList<ShoppingCartItem> cart)
     {
-        Dictionary<string, object> paymentDataDictionary = new();
+        newOrder.CustomValuesXml ??= new();
 
         if (newOrder.PaymentData is not null)
         {
-            paymentDataDictionary.Add("Número de referencia", newOrder.PaymentData.ReferenceNumber);
-            paymentDataDictionary.Add("Monto en Bs", newOrder.PaymentData.AmountInBs);
+            newOrder.CustomValuesXml.Add("Número de referencia", newOrder.PaymentData.ReferenceNumber);
+            newOrder.CustomValuesXml.Add("Monto en Bs", newOrder.PaymentData.AmountInBs);
         }
 
         bool pickupInStore = newOrder.PickUpInStore ?? false;
@@ -244,7 +248,7 @@ public class OrderApiService : IOrderApiService
             PaymentMethodSystemName = newOrder.PaymentMethodSystemName,
             OrderGuid = Guid.NewGuid(),
             OrderGuidGeneratedOnUtc = DateTime.UtcNow,
-            CustomValues = paymentDataDictionary
+            CustomValues = newOrder.CustomValuesXml
         };
 
         //_paymentService.GenerateOrderGuid(processPaymentRequest);
@@ -292,19 +296,23 @@ public class OrderApiService : IOrderApiService
 
     #region Private methods
     private IQueryable<Order> GetOrdersQuery(
-        int customerId,
+        int? customerId = null,
         DateTime? createdAtMin = null, 
         DateTime? createdAtMax = null, 
         OrderStatus? status = null,
         PaymentStatus? paymentStatus = null, 
         ShippingStatus? shippingStatus = null, 
         int? storeId = null, 
-        bool orderByDateDesc = false
+        bool orderByDateDesc = false,
+        int? sellerId = null
     )
     {
         var query = _orderRepository.Table;
 
-        query = query.Where(order => order.CustomerId == customerId);
+        if (customerId != null)
+        {
+            query = query.Where(order => order.CustomerId == customerId);
+        }
 
         if (status != null)
         {
@@ -345,7 +353,15 @@ public class OrderApiService : IOrderApiService
         else
         {
             query = query.OrderBy(order => order.Id);
+        }
 
+        if (sellerId != null)
+        {
+            query = from order in query
+                    join customer in _customerRepository.Table
+                        on order.CustomerId equals customer.Id
+                    where customer.SellerId == sellerId
+                    select order;
         }
 
         return query;
