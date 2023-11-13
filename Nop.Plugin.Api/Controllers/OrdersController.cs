@@ -352,12 +352,12 @@ public class OrdersController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
-    [HttpPost("seller/{id}",Name = "PlaceOrderWithCustomer")]
+    [HttpPost("seller/{customerId}",Name = "PlaceOrderWithCustomer")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> PlaceOrderWithCustomer([FromBody] OrderPost newOrderPost, [FromRoute] int id)
+    public async Task<IActionResult> PlaceOrderWithCustomer([FromBody] OrderPost newOrderPost, [FromRoute] int customerId)
     {
         var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
 
@@ -366,7 +366,7 @@ public class OrdersController : BaseApiController
             return Error(HttpStatusCode.Unauthorized);
         }
 
-        var customer = await _customerApiService.GetCustomerEntityByIdAsync(id);
+        var customer = await _customerApiService.GetCustomerEntityByIdAsync(customerId);
 
         if (customer is null) 
         {
@@ -445,6 +445,115 @@ public class OrdersController : BaseApiController
 
             ordersIdRootObject.Orders.Add(placeOrderResult.PlacedOrder.Id);
         }
+
+        return OkResult(ordersIdRootObject);
+    }
+
+
+    /// <summary>
+    ///     Place an order
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpPost("seller/batch/{customerId}", Name = "PlaceManyOrdersWithCustomer")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> PlaceManyOrdersWithCustomer([FromBody] List<OrderPost> newOrderPostList, [FromRoute] int customerId)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var customer = await _customerApiService.GetCustomerEntityByIdAsync(customerId);
+
+        if (customer is null)
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "non-existing customer");
+        }
+
+        if (!IsCustomerRelatedToSeller(seller, customer))
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "the customer is not related to this seller");
+        }
+
+        if (newOrderPostList is null || newOrderPostList.Count == 0)
+        {
+            return Error(HttpStatusCode.BadRequest, "order_manager", "order_manager is empty");
+        }
+
+        OrdersIdRootObject ordersIdRootObject = new();
+
+        int billingAddressId = newOrderPostList.FirstOrDefault()?.BillingAddressId ?? 0;
+
+        if (billingAddressId == 0)
+        {
+            return Error(HttpStatusCode.BadRequest, "billingAddress", "non-existing billing address");
+        }
+
+        var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
+
+        if (addressValidation is null)
+        {
+            return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
+        }
+
+        int storeId = _storeContext.GetCurrentStore().Id;
+
+        int index = 0;
+
+        foreach (var newOrderPost in newOrderPostList)
+        {
+            if (newOrderPost.OrderItems is null)
+            {
+                return Error(HttpStatusCode.BadRequest, $"order: {index} - order_items", "the order_items field cannot be null");
+            }
+
+            var store = _storeContext.GetCurrentStore();
+
+            var warnings = await _shoppingCartItemApiService.ReplaceCartAsync(customer, newOrderPost.OrderItems, store.Id);
+
+            var error = GetWarningBatchErrors(warnings);
+            if (error is not null) return error;
+
+            //List<ShoppingCartItem> cartSection = await _shoppingCartItemApiService.GetShoppingCartItemsAsync(customerId: customer.Id, shoppingCartType: ShoppingCartType.ShoppingCart);
+
+            var cartSection = newOrderPost.OrderItems.Select(item => new ShoppingCartItem
+            {
+                CustomerId = customer.Id,
+                ProductId = item.ProductId,
+                Quantity = item.Quantity,
+                ShoppingCartType = item.ShoppingCartType,
+            }).ToList();
+
+            var placeOrderResult = await _orderApiService.PlaceOrderAsync(newOrderPost, customer, storeId, cartSection);
+
+            if (!placeOrderResult.Success)
+            {
+                foreach (var placeOrdererror in placeOrderResult.Errors)
+                {
+                    ModelState.AddModelError("order_placement", placeOrdererror);
+                }
+
+                return Error(HttpStatusCode.BadRequest);
+            }
+
+            await CustomerActivityService.InsertActivityAsync("AddNewOrder", await LocalizationService.GetResourceAsync("ActivityLog.AddNewOrder"), placeOrderResult.PlacedOrder);
+
+            ordersIdRootObject.Orders.Add(placeOrderResult.PlacedOrder.Id);
+            
+            index++;
+        }
+
+        customer.BillingAddressId = billingAddressId;
+        customer.ShippingAddressId = billingAddressId;
+
+        await CustomerService.UpdateCustomerAsync(customer); // update billing and shipping addresses
 
         return OkResult(ordersIdRootObject);
     }
