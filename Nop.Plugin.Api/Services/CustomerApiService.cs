@@ -288,50 +288,6 @@ public class CustomerApiService : ICustomerApiService
 
     #nullable enable
 
-    private string CamelCase2SnakeCase(string input)
-    {
-        StringBuilder resultado = new();
-
-        // Agrega el primer carácter en minúsculas
-        resultado.Append(char.ToLower(input[0]));
-
-        // Recorre el resto de la cadena
-        for (int i = 1; i < input.Length; i++)
-        {
-            // Si el carácter actual es una letra mayúscula, agrega un guion bajo seguido de la letra en minúsculas
-            if (char.IsUpper(input[i]))
-            {
-                resultado.Append('_');
-                resultado.Append(char.ToLower(input[i]));
-            }
-            else
-            {
-                // Si el carácter no es una letra mayúscula, simplemente agrégalo al resultado
-                resultado.Append(input[i]);
-            }
-        }
-
-        return resultado.ToString();
-    }
-
-    private CustomerDto AddAttributesToCustomerDto(CustomerDto customer, IList<GenericAttribute> attributes)
-    {
-        customer.Attributes = null;
-
-        if (attributes.Count > 0) 
-        {
-            customer.Attributes = new();
-
-            foreach (var attribute in attributes)
-            {
-                customer.Attributes[CamelCase2SnakeCase(attribute.Key)] = attribute.Value;
-            }
-            
-        }
-        
-        return customer;
-    }
-
     public async Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers)
     {
         var query = from customer in customers
@@ -360,7 +316,7 @@ public class CustomerApiService : ICustomerApiService
                     join customerRoleMap in _customerCustomerRoleMappingRepository.Table
                         on customer.Id equals customerRoleMap.CustomerId
                         into customerRoleList
-                    where  (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
+                    where  (lastUpdateUtc == null || customer.UpdatedOnUtc > lastUpdateUtc)
                         && customerRoleList.Any(r => r.Id == registeredRole.Id)
                         && customerRoleList.All(r => r.Id != sellerRole.Id)
                         && customer.SellerId == seller.Id
@@ -384,7 +340,7 @@ public class CustomerApiService : ICustomerApiService
                     join customerRoleMap in _customerCustomerRoleMappingRepository.Table
                         on customer.Id equals customerRoleMap.CustomerId
                         into customerRoleList
-                    where (lastUpdateUtc == null || customer.CreatedOnUtc > lastUpdateUtc)
+                    where (lastUpdateUtc == null || customer.UpdatedOnUtc > lastUpdateUtc)
                         && customerRoleList.Any(r => r.CustomerRoleId == registeredRole.Id)
                         && customerRoleList.All(r => r.CustomerRoleId != sellerRole.Id)
                     select customer;
@@ -817,6 +773,50 @@ public class CustomerApiService : ICustomerApiService
 
         return query;
     }
+    private string CamelCase2SnakeCase(string input)
+    {
+        StringBuilder resultado = new();
+
+        // Agrega el primer carácter en minúsculas
+        resultado.Append(char.ToLower(input[0]));
+
+        // Recorre el resto de la cadena
+        for (int i = 1; i < input.Length; i++)
+        {
+            // Si el carácter actual es una letra mayúscula, agrega un guion bajo seguido de la letra en minúsculas
+            if (char.IsUpper(input[i]))
+            {
+                resultado.Append('_');
+                resultado.Append(char.ToLower(input[i]));
+            }
+            else
+            {
+                // Si el carácter no es una letra mayúscula, simplemente agrégalo al resultado
+                resultado.Append(input[i]);
+            }
+        }
+
+        return resultado.ToString();
+    }
+
+    private CustomerDto AddAttributesToCustomerDto(CustomerDto customer, IList<GenericAttribute> attributes)
+    {
+        customer.Attributes = null;
+
+        if (attributes.Count > 0)
+        {
+            customer.Attributes = new();
+
+            foreach (var attribute in attributes)
+            {
+                customer.Attributes[CamelCase2SnakeCase(attribute.Key)] = attribute.Value;
+            }
+
+        }
+
+        return customer;
+    }
+
 
     #endregion
 }
