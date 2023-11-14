@@ -42,8 +42,14 @@ public class CustomerDto: BaseDto
     /// <summary>
     /// Gets or sets the date and time of entity creation
     /// </summary>
-    [JsonProperty("updated_on_utc")]
+    [JsonProperty("created_on_utc")]
     public DateTime CreatedOnUtc { get; set; }
+
+    /// <summary>
+    /// Gets or sets the date and time of product update
+    /// </summary>
+    [JsonProperty("updated_on_utc")]
+    public DateTime UpdatedOnUtc { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time of entity creation
