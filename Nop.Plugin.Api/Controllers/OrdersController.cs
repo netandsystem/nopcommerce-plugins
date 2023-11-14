@@ -503,6 +503,11 @@ public class OrdersController : BaseApiController
             return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
         }
 
+        customer.BillingAddressId = billingAddressId;
+        customer.ShippingAddressId = billingAddressId;
+
+        await CustomerService.UpdateCustomerAsync(customer); // update billing and shipping addresses
+
         int storeId = _storeContext.GetCurrentStore().Id;
 
         int index = 0;
@@ -549,11 +554,6 @@ public class OrdersController : BaseApiController
             
             index++;
         }
-
-        customer.BillingAddressId = billingAddressId;
-        customer.ShippingAddressId = billingAddressId;
-
-        await CustomerService.UpdateCustomerAsync(customer); // update billing and shipping addresses
 
         return OkResult(ordersIdRootObject);
     }
