@@ -36,6 +36,8 @@ using Nop.Services.Stores;
 
 namespace Nop.Plugin.Api.Controllers;
 
+#nullable enable
+
 [Route("api/categories")]
 public class CategoriesController : BaseApiController
 {
