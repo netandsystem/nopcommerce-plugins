@@ -17,6 +17,12 @@ public class OrderDto : BaseDto
     private ICollection<OrderItemDto> _orderItems;
 
     /// <summary>
+    /// Gets or sets the order identifier
+    /// </summary>
+    [JsonProperty("order_guid")]
+    public Guid OrderGuid { get; set; }
+
+    /// <summary>
     ///     Gets or sets a value indicating whether a customer chose "pick up in store" shipping option
     /// </summary>
     [JsonProperty("pick_up_in_store")]
