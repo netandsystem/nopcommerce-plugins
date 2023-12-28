@@ -9,7 +9,7 @@ namespace Nop.Plugin.Api.DTO.Categories
 {
     //[Validator(typeof(CategoryDtoValidator))]
     [JsonObject(Title = "category")]
-    public class CategoryDto : BaseDto
+    public class CategoryDto : BaseSyncDto
     {
         [JsonProperty("name")]
         public string Name { get; set; }
@@ -98,28 +98,10 @@ namespace Nop.Plugin.Api.DTO.Categories
         public bool? Published { get; set; }
 
         /// <summary>
-        ///     Gets or sets a value indicating whether the entity has been deleted
-        /// </summary>
-        [JsonProperty("deleted")]
-        public bool? Deleted { get; set; }
-
-        /// <summary>
         ///     Gets or sets the display order
         /// </summary>
         [JsonProperty("display_order")]
         public int? DisplayOrder { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the date and time of instance creation
-        /// </summary>
-        [JsonProperty("created_on_utc")]
-        public DateTime? CreatedOnUtc { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the date and time of instance update
-        /// </summary>
-        [JsonProperty("updated_on_utc")]
-        public DateTime? UpdatedOnUtc { get; set; }
 
         [JsonProperty("role_ids")]
         public List<int> RoleIds { get; set; }

@@ -11,7 +11,7 @@ namespace Nop.Plugin.Api.DTO.Customers;
 
 [JsonObject(Title = "customer")]
 //[Validator(typeof(CustomerDtoValidator))]
-public class CustomerDto: BaseDto
+public class CustomerDto : BaseSyncDto
 {
     private ICollection<AddressDto>? _addresses;
 
@@ -32,24 +32,6 @@ public class CustomerDto: BaseDto
     /// </summary>
     [JsonProperty("vendor_id")]
     public int VendorId { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the customer has been deleted
-    /// </summary>
-    [JsonProperty("deleted")]
-    public bool Deleted { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time of entity creation
-    /// </summary>
-    [JsonProperty("created_on_utc")]
-    public DateTime CreatedOnUtc { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time of product update
-    /// </summary>
-    [JsonProperty("updated_on_utc")]
-    public DateTime UpdatedOnUtc { get; set; }
 
     /// <summary>
     /// Gets or sets the date and time of entity creation

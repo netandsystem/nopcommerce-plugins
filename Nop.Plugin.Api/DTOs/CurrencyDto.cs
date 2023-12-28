@@ -10,7 +10,7 @@ using Nop.Plugin.Api.DTO.Base;
 namespace Nop.Plugin.Api.DTO;
 
 [JsonObject(Title = "currency")]
-public class CurrencyDto : BaseDto
+public class CurrencyDto : BaseSyncDto
 {
     [JsonProperty("name")]
     public string Name { get; set; }
@@ -26,12 +26,6 @@ public class CurrencyDto : BaseDto
 
     [JsonProperty("rounding_type")]
     public RoundingType RoundingType { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time of instance update
-    /// </summary>
-    [JsonProperty("updated_on_utc")]
-    public DateTime UpdatedOnUtc { get; set; }
 }
 
 [JsonConverter(typeof(StringEnumConverter))]

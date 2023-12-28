@@ -12,7 +12,7 @@ namespace Nop.Plugin.Api.DTO.Products;
 
 [JsonObject(Title = "product")]
 //[Validator(typeof(ProductDtoValidator))]
-public class ProductDto : BaseDto
+public class ProductDto : BaseSyncDto
 {
 
     /// <summary>
@@ -64,24 +64,6 @@ public class ProductDto : BaseDto
 
     [JsonProperty("stock_quantity")]
     public int StockQuantity { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time of product creation
-    /// </summary>
-    [JsonProperty("created_on_utc")]
-    public DateTime CreatedOnUtc { get; set; }
-
-    /// <summary>
-    /// Gets or sets the date and time of product update
-    /// </summary>
-    [JsonProperty("updated_on_utc")]
-    public DateTime UpdatedOnUtc { get; set; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether the entity has been deleted
-    /// </summary>
-    [JsonProperty("deleted")]
-    public bool Deleted { get; set; }
 
     /// <summary>
     /// Gets or sets a value indicating whether the entity is published
