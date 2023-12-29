@@ -94,7 +94,7 @@ public class ProductsController : BaseApiController
 
     #region Methods
 
-    #nullable enable
+#nullable enable
 
     /// <summary>
     ///     Search products
@@ -102,7 +102,7 @@ public class ProductsController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
-    [HttpGet("search", Name ="Search")]
+    [HttpGet("search", Name = "Search")]
     [ProducesResponseType(typeof(ProductsRootObjectDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -144,14 +144,14 @@ public class ProductsController : BaseApiController
                 showHidden
             );
 
-        var result = await _productApiService.JoinProductsAndPicturesAsync( products );
+        var result = await _productApiService.JoinProductsAndPicturesAsync(products);
 
         var productsRootObject = new ProductsRootObjectDto
         {
             Products = result
         };
 
-        return OkResult(productsRootObject, fields);      
+        return OkResult(productsRootObject, fields);
     }
 
     /// <summary>
@@ -347,8 +347,15 @@ public class ProductsController : BaseApiController
     [ProducesResponseType(typeof(ProductsRootObjectDto), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)
+    public async Task<IActionResult> SyncData(long? lastUpdateTs, string? fields)
     {
+        DateTime? lastUpdateUtc = null;
+
+        if (lastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
+        }
+
         var products = await _productApiService.GetLastestUpdatedProducts(lastUpdateUtc);
 
         var result = await _productApiService.JoinProductsAndPicturesAsync(products);

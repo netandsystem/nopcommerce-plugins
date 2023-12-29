@@ -306,9 +306,14 @@ public class DTOHelper : IDTOHelper
 		return taxCategoryDto;
 	}
 
-	public static long Date2Timestamp(DateTime date)
+	public static long DateTimeToTimestamp(DateTime date)
 	{
 		return (long)(date - new DateTime(1970, 1, 1)).TotalMilliseconds;
+	}
+
+	public static DateTime TimestampToDateTime(long timestamp)
+	{
+		return new DateTime(1970, 1, 1).AddMilliseconds(timestamp);
 	}
 
 	#region Private methods

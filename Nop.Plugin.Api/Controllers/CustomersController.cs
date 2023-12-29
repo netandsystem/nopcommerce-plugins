@@ -175,13 +175,20 @@ public class CustomersController : BaseApiController
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     //[GetRequestsErrorInterceptorActionFilter]
-    public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)
+    public async Task<IActionResult> SyncData(long? lastUpdateTs, string? fields)
     {
         var sellerEntity = await _authenticationService.GetAuthenticatedCustomerAsync();
 
         if (sellerEntity is null)
         {
             return Error(HttpStatusCode.Unauthorized);
+        }
+
+        DateTime? lastUpdateUtc = null;
+
+        if (lastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
         }
 
         var result = await _customerApiService.GetLastestUpdatedCustomersAsync(
@@ -665,7 +672,7 @@ public class CustomersController : BaseApiController
 
         return Ok();
     }
-    
+
     #endregion
 
     #region Private methods

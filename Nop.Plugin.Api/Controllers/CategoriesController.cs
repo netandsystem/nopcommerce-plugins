@@ -82,8 +82,15 @@ public class CategoriesController : BaseApiController
     [ProducesResponseType(typeof(CategoriesRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> SyncData(DateTime? lastUpdateUtc, string? fields)
+    public async Task<IActionResult> SyncData(long? lastUpdateTs, string? fields)
     {
+        DateTime? lastUpdateUtc = null;
+
+        if (lastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
+        }
+
         var result = await _categoryApiService.GetLastestUpdatedCategoriesAsync(lastUpdateUtc);
 
         var rootObject = new CategoriesRootObject()
@@ -101,8 +108,8 @@ public class CategoriesController : BaseApiController
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
     [HttpGet(Name = "GetCategories")]
-    [ProducesResponseType(typeof(CategoriesRootObject), (int) HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(CategoriesRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     [GetRequestsErrorInterceptorActionFilter]
     public async Task<IActionResult> GetCategories([FromQuery] CategoriesParametersModel parameters)
     {
@@ -125,9 +132,9 @@ public class CategoriesController : BaseApiController
         IList<CategoryDto> categoriesAsDtos = await allCategories.SelectAwait(async category => await _dtoHelper.PrepareCategoryDTOAsync(category)).ToListAsync();
 
         var categoriesRootObject = new CategoriesRootObject
-                                   {
-                                       Categories = categoriesAsDtos
-                                   };
+        {
+            Categories = categoriesAsDtos
+        };
 
         var json = JsonFieldsSerializer.Serialize(categoriesRootObject, parameters.Fields);
 
@@ -140,9 +147,9 @@ public class CategoriesController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
     [HttpGet("count", Name = "GetCategoriesCount")]
-    [ProducesResponseType(typeof(CategoriesCountRootObject), (int) HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(string), (int) HttpStatusCode.Unauthorized)]
-    [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(CategoriesCountRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     [GetRequestsErrorInterceptorActionFilter]
     public async Task<IActionResult> GetCategoriesCount([FromQuery] CategoriesCountParametersModel parameters)
     {
@@ -151,9 +158,9 @@ public class CategoriesController : BaseApiController
                                                                         parameters.PublishedStatus, parameters.ProductId, parameters.ParentCategoryId);
 
         var categoriesCountRootObject = new CategoriesCountRootObject
-                                        {
-                                            Count = allCategoriesCount
-                                        };
+        {
+            Count = allCategoriesCount
+        };
 
         return Ok(categoriesCountRootObject);
     }
@@ -167,10 +174,10 @@ public class CategoriesController : BaseApiController
     /// <response code="404">Not Found</response>
     /// <response code="401">Unauthorized</response>
     [HttpGet("{id}", Name = "GetCategoryById")]
-    [ProducesResponseType(typeof(CategoriesRootObject), (int) HttpStatusCode.OK)]
-    [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.BadRequest)]
-    [ProducesResponseType(typeof(ErrorsRootObject), (int) HttpStatusCode.NotFound)]
-    [ProducesResponseType(typeof(string), (int) HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(CategoriesRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [GetRequestsErrorInterceptorActionFilter]
     public async Task<IActionResult> GetCategoryById([FromRoute] int id, [FromQuery] string fields = "")
     {
