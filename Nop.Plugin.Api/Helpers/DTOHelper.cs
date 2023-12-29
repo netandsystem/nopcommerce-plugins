@@ -66,7 +66,7 @@ public class DTOHelper : IDTOHelper
 	private readonly IUrlRecordService _urlRecordService;
 	private readonly IProductApiService _productApiService;
 
-    private readonly Lazy<Task<Language>> _customerLanguage;
+	private readonly Lazy<Task<Language>> _customerLanguage;
 
 	public DTOHelper(
 		IProductService productService,
@@ -88,8 +88,8 @@ public class DTOHelper : IDTOHelper
 		IAuthenticationService authenticationService,
 		ICustomerApiService customerApiService,
 		ICurrencyService currencyService,
-        IProductApiService productApiService
-    )
+		IProductApiService productApiService
+	)
 	{
 		_productService = productService;
 		_aclService = aclService;
@@ -114,7 +114,7 @@ public class DTOHelper : IDTOHelper
 		_customerLanguage = new Lazy<Task<Language>>(GetAuthenticatedCustomerLanguage);
 		_productApiService = productApiService;
 
-    }
+	}
 
 	public async Task<CategoryDto> PrepareCategoryDTOAsync(Category category)
 	{
@@ -168,9 +168,9 @@ public class DTOHelper : IDTOHelper
 
 	//	var product = await _productService.GetProductByIdAsync(orderItem.ProductId);
 
- //       dto.Product = await _productApiService.AddPicturesToProductAsync(product);
+	//       dto.Product = await _productApiService.AddPicturesToProductAsync(product);
 
- //       dto.Attributes = _productAttributeConverter.Parse(orderItem.AttributesXml);
+	//       dto.Attributes = _productAttributeConverter.Parse(orderItem.AttributesXml);
 
 	//	return dto;
 	//}
@@ -304,6 +304,16 @@ public class DTOHelper : IDTOHelper
 	{
 		var taxCategoryDto = taxCategory.ToDto();
 		return taxCategoryDto;
+	}
+
+	public static long DateTimeToTimestamp(DateTime date)
+	{
+		return (long)(date - new DateTime(1970, 1, 1)).TotalMilliseconds;
+	}
+
+	public static DateTime TimestampToDateTime(long timestamp)
+	{
+		return new DateTime(1970, 1, 1).AddMilliseconds(timestamp);
 	}
 
 	#region Private methods
