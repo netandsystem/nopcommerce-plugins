@@ -12,7 +12,7 @@ namespace Nop.Plugin.Api.DTO.Orders;
 
 [JsonObject(Title = "order")]
 //[Validator(typeof(OrderDtoValidator))]
-public class OrderDto : BaseDto
+public class OrderDto : BaseSyncDto
 {
     private ICollection<OrderItemDto> _orderItems;
 
@@ -106,12 +106,6 @@ public class OrderDto : BaseDto
     [JsonProperty("custom_values")]
     public Dictionary<string, object> CustomValues { get; set; }
 
-    /// <summary>
-    ///     Gets or sets the date and time of order creation
-    /// </summary>
-    [JsonProperty("created_on_utc")]
-    public DateTime? CreatedOnUtc { get; set; }
-
     [JsonProperty("customer_id")]
     public int? CustomerId { get; set; }
 
@@ -121,6 +115,18 @@ public class OrderDto : BaseDto
     //[JsonProperty("billing_address", Required = Required.Always)]
     [JsonProperty("billing_address")]
     public AddressDto BillingAddress { get; set; }
+
+    /// <summary>
+    /// Gets or sets the associated seller
+    /// </summary>
+    [JsonProperty("seller_id")]
+    public int? SellerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the associated order manager guid
+    /// </summary>
+    [JsonProperty("order_manager_guid")]
+    public Guid? OrderManagerGuid { get; set; }
 
     /// <summary>
     ///     Gets or sets order items

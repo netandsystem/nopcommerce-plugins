@@ -63,6 +63,18 @@ public class OrderPost
     /// </summary>
     [JsonProperty("custom_values_xml", Required = Required.AllowNull)]
     public Dictionary<string, object>? CustomValuesXml { get; set; }
+
+    /// <summary>
+    /// Gets or sets the associated seller
+    /// </summary>
+    [JsonProperty("seller_id", Required = Required.AllowNull)]
+    public int? SellerId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the associated order manager guid
+    /// </summary>
+    [JsonProperty("order_manager_guid", Required = Required.AllowNull)]
+    public Guid? OrderManagerGuid { get; set; }
 }
 
 public record PaymentData

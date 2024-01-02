@@ -87,13 +87,13 @@ public class OrderApiService : IOrderApiService
     #region Methods
 
     public async Task<List<OrderDto>> GetOrders(
-        int? customerId, 
-        int? limit, 
+        int? customerId,
+        int? limit,
         int? page,
-        OrderStatus? status, 
-        PaymentStatus? paymentStatus, 
-        ShippingStatus? shippingStatus, 
-        int? storeId, 
+        OrderStatus? status,
+        PaymentStatus? paymentStatus,
+        ShippingStatus? shippingStatus,
+        int? storeId,
         bool orderByDateDesc,
         DateTime? createdAtMin,
         DateTime? createdAtMax,
@@ -189,11 +189,11 @@ public class OrderApiService : IOrderApiService
                     Errors = response.Errors
                 };
             }
-                
+
             var selectedPoint = response.PickupPoints.FirstOrDefault();
 
             await SavePickupOptionAsync(selectedPoint, customer, storeId);
-        } 
+        }
         else
         {
             if (newOrder.ShippingRateComputationMethodSystemName is null)
@@ -207,9 +207,9 @@ public class OrderApiService : IOrderApiService
             }
 
             //set value indicating that "pick up in store" option has not been chosen
-            #nullable disable
+#nullable disable
             await _genericAttributeService.SaveAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, null, storeId);
-            #nullable enable
+#nullable enable
 
             //find shipping method
             //performance optimization. try cache first
@@ -248,7 +248,9 @@ public class OrderApiService : IOrderApiService
             PaymentMethodSystemName = newOrder.PaymentMethodSystemName,
             OrderGuid = Guid.NewGuid(),
             OrderGuidGeneratedOnUtc = DateTime.UtcNow,
-            CustomValues = newOrder.CustomValuesXml
+            CustomValues = newOrder.CustomValuesXml,
+            OrderManagerGuid = newOrder.OrderManagerGuid,
+            SellerId = newOrder.SellerId
         };
 
         //_paymentService.GenerateOrderGuid(processPaymentRequest);
@@ -297,12 +299,12 @@ public class OrderApiService : IOrderApiService
     #region Private methods
     private IQueryable<Order> GetOrdersQuery(
         int? customerId = null,
-        DateTime? createdAtMin = null, 
-        DateTime? createdAtMax = null, 
+        DateTime? createdAtMin = null,
+        DateTime? createdAtMax = null,
         OrderStatus? status = null,
-        PaymentStatus? paymentStatus = null, 
-        ShippingStatus? shippingStatus = null, 
-        int? storeId = null, 
+        PaymentStatus? paymentStatus = null,
+        ShippingStatus? shippingStatus = null,
+        int? storeId = null,
         bool orderByDateDesc = false,
         int? sellerId = null
     )
@@ -357,11 +359,7 @@ public class OrderApiService : IOrderApiService
 
         if (sellerId != null)
         {
-            query = from order in query
-                    join customer in _customerRepository.Table
-                        on order.CustomerId equals customer.Id
-                    where customer.SellerId == sellerId
-                    select order;
+            query = query.Where(order => order.SellerId == sellerId);
         }
 
         return query;

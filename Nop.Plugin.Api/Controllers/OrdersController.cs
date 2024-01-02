@@ -206,7 +206,7 @@ public class OrdersController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
-    [HttpGet("seller",Name = "GetOrdersBySellerId")]
+    [HttpGet("seller", Name = "GetOrdersBySellerId")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -270,7 +270,7 @@ public class OrdersController : BaseApiController
     [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> PlaceOrder( OrderPost newOrderPost )
+    public async Task<IActionResult> PlaceOrder(OrderPost newOrderPost)
     {
         var customer = await _authenticationService.GetAuthenticatedCustomerAsync();
 
@@ -317,7 +317,7 @@ public class OrdersController : BaseApiController
 
         OrdersIdRootObject ordersIdRootObject = new();
 
-        while(cart.Any())
+        while (cart.Any())
         {
             //Get a cart section
             List<ShoppingCartItem> cartSection = cart.Take(_orderSettings.MaxItemsPerOrder).ToList();
@@ -352,7 +352,7 @@ public class OrdersController : BaseApiController
     /// <response code="200">OK</response>
     /// <response code="400">Bad Request</response>
     /// <response code="401">Unauthorized</response>
-    [HttpPost("seller/{customerId}",Name = "PlaceOrderWithCustomer")]
+    [HttpPost("seller/{customerId}", Name = "PlaceOrderWithCustomer")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
@@ -368,7 +368,7 @@ public class OrdersController : BaseApiController
 
         var customer = await _customerApiService.GetCustomerEntityByIdAsync(customerId);
 
-        if (customer is null) 
+        if (customer is null)
         {
             return Error(HttpStatusCode.BadRequest, "customer_id", "non-existing customer");
         }
@@ -551,7 +551,7 @@ public class OrdersController : BaseApiController
             await CustomerActivityService.InsertActivityAsync("AddNewOrder", await LocalizationService.GetResourceAsync("ActivityLog.AddNewOrder"), placeOrderResult.PlacedOrder);
 
             ordersIdRootObject.Orders.Add(placeOrderResult.PlacedOrder.Id);
-            
+
             index++;
         }
 
