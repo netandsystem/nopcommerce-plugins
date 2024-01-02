@@ -24,10 +24,13 @@ public interface IOrderApiService
         bool orderByDateDesc,
         DateTime? createdAtMin,
         DateTime? createdAtMax,
-        int? sellerId = null
+        int? sellerId = null,
+        DateTime? lastUpdateUtc = null
     );
 
     Task<PlaceOrderResult> PlaceOrderAsync(OrderPost newOrder, Customer customer, int storeId, IList<ShoppingCartItem> cart);
+
+    Task<List<OrderDto>> GetLastestUpdatedItemsAsync(DateTime? lastUpdateUtc, int sellerId, int storeId);
 
     //IList<Order> GetOrders(
     //    IList<int> ids = null, DateTime? createdAtMin = null, DateTime? createdAtMax = null,

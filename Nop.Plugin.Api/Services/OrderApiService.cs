@@ -24,6 +24,8 @@ using Nop.Services.Shipping;
 using Nop.Services.Customers;
 using Nop.Core;
 using Nop.Services.Localization;
+using DocumentFormat.OpenXml.Spreadsheet;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -97,7 +99,8 @@ public class OrderApiService : IOrderApiService
         bool orderByDateDesc,
         DateTime? createdAtMin,
         DateTime? createdAtMax,
-        int? sellerId = null
+        int? sellerId = null,
+        DateTime? lastUpdateUtc = null
     )
     {
         int limitValue = limit ?? Constants.Configurations.DefaultLimit;
@@ -112,7 +115,8 @@ public class OrderApiService : IOrderApiService
                 shippingStatus: shippingStatus,
                 storeId: storeId,
                 orderByDateDesc: orderByDateDesc,
-                sellerId: sellerId
+                sellerId: sellerId,
+                lastUpdateUtc: lastUpdateUtc
             );
 
         var ordersItemQuery = from order in ordersQuery
@@ -270,6 +274,25 @@ public class OrderApiService : IOrderApiService
         return placeOrderResult;
     }
 
+    public async Task<List<OrderDto>> GetLastestUpdatedItemsAsync(DateTime? lastUpdateUtc, int sellerId, int storeId)
+    {
+        return await GetOrders(
+                customerId: null,
+                limit: null,
+                page: null,
+                status: null,
+                paymentStatus: null,
+                shippingStatus:     null,
+                storeId: storeId,
+                orderByDateDesc: false,
+                createdAtMin: null,
+                createdAtMax: null,
+                sellerId: sellerId,
+                lastUpdateUtc: lastUpdateUtc
+            );
+    }
+
+
     /*
 
     public Order GetOrderById(int orderId)
@@ -306,7 +329,8 @@ public class OrderApiService : IOrderApiService
         ShippingStatus? shippingStatus = null,
         int? storeId = null,
         bool orderByDateDesc = false,
-        int? sellerId = null
+        int? sellerId = null,
+        DateTime? lastUpdateUtc = null
     )
     {
         var query = _orderRepository.Table;
@@ -360,6 +384,11 @@ public class OrderApiService : IOrderApiService
         if (sellerId != null)
         {
             query = query.Where(order => order.SellerId == sellerId);
+        }
+
+        if (lastUpdateUtc != null)
+        {
+            query = query.Where(order => order.UpdatedOnUtc > lastUpdateUtc);
         }
 
         return query;

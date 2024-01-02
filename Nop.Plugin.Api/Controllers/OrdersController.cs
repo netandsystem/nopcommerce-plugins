@@ -260,6 +260,47 @@ public class OrdersController : BaseApiController
     }
 
     /// <summary>
+    ///     Receive a list of all Orders
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpGet("syncdata", Name = "SyncOrders")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> SyncData(long? lastUpdateTs, string? fields)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var storeId = _storeContext.GetCurrentStore().Id;
+
+        DateTime? lastUpdateUtc = null;
+
+        if (lastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
+        }
+
+        IList<OrderDto> ordersDto = await _orderApiService.GetLastestUpdatedItemsAsync(lastUpdateUtc, seller.Id, storeId);
+
+        var ordersRootObject = new OrdersRootObject
+        {
+            Orders = ordersDto
+        };
+
+        return OkResult(ordersRootObject, fields);
+    }
+
+
+
+    /// <summary>
     ///     Place an order
     /// </summary>
     /// <response code="200">OK</response>
