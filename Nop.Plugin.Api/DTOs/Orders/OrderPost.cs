@@ -17,6 +17,12 @@ namespace Nop.Plugin.Api.DTO.Orders;
 //[Validator(typeof(OrderDtoValidator))]
 public class OrderPost
 {
+    /// <summary>
+    /// Gets or sets the order identifier
+    /// </summary>
+    [JsonProperty("order_guid", Required = Required.AllowNull)]
+    public Guid? OrderGuid { get; set; }
+
     [JsonProperty("pick_up_in_store", Required = Required.Always)]
     public bool? PickUpInStore { get; set; }
 

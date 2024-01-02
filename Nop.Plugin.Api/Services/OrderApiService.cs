@@ -211,9 +211,9 @@ public class OrderApiService : IOrderApiService
             }
 
             //set value indicating that "pick up in store" option has not been chosen
-#nullable disable
+            #nullable disable
             await _genericAttributeService.SaveAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, null, storeId);
-#nullable enable
+            #nullable enable
 
             //find shipping method
             //performance optimization. try cache first
@@ -250,7 +250,7 @@ public class OrderApiService : IOrderApiService
             StoreId = storeId,
             CustomerId = customer.Id,
             PaymentMethodSystemName = newOrder.PaymentMethodSystemName,
-            OrderGuid = Guid.NewGuid(),
+            OrderGuid = newOrder.OrderGuid ?? Guid.NewGuid(),
             OrderGuidGeneratedOnUtc = DateTime.UtcNow,
             CustomValues = newOrder.CustomValuesXml,
             OrderManagerGuid = newOrder.OrderManagerGuid,
