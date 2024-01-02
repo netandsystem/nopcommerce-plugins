@@ -26,6 +26,11 @@ using Nop.Services.Discounts;
 using Nop.Services.Media;
 using Nop.Services.Security;
 using Nop.Services.Stores;
+using Nop.Plugin.Api.Authorization.Policies;
+using Nop.Core;
+using System.Linq;
+using Nop.Services.Configuration;
+using Nop.Plugin.Api.MappingExtensions;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -38,7 +43,10 @@ public class TokenController: BaseApiController
     private readonly IAuthenticationService _authenticationService;
     private readonly ICustomerRegistrationService _customerRegistrationService;
     private readonly CustomerSettings _customerSettings;
-    private readonly ILocalizationService _localizationService;
+    private readonly ILocalizationService _localizationService; 
+    private readonly ISettingService _settingService;
+    private readonly IStoreContext _storeContext;
+
 
     #endregion
 
@@ -56,7 +64,9 @@ public class TokenController: BaseApiController
         IStoreService storeService,
         IDiscountService discountService,
         ILocalizationService localizationService,
-        IPictureService pictureService
+        IPictureService pictureService,
+        ISettingService settingService,
+        IStoreContext storeContext
     ) :
     base(
         jsonFieldsSerializer,
@@ -75,11 +85,15 @@ public class TokenController: BaseApiController
         _customerSettings = customerSettings;
         _apiSettings = apiSettings;
         _localizationService = localizationService;
+        _settingService = settingService;
+        _storeContext = storeContext;
     }
 
     #endregion
 
     #region Methods
+
+    #nullable enable
 
     [HttpPost("login", Name = "TokenLogin")]
     [ProducesResponseType(typeof(TokenResponse), (int)HttpStatusCode.OK)]
@@ -114,9 +128,72 @@ public class TokenController: BaseApiController
                 return BadRequest("Missing password");
             }
 
-            return await LoginWithResultsAsync(model.Username, model.Password, model.RememberMe);
+            var (LoginResult, error) = await LoginWithResultsAsync(model.Username, model.Password, model.RememberMe);
+
+            if (error != null)
+            {
+                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = error });
+            }
+
+            return Ok(LoginResult);
         }
     }
+
+    [HttpPost("login/seller", Name = "SellerLogin")]
+    [ProducesResponseType(typeof(TokenResponse), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Forbidden)]
+    public async Task<IActionResult> SellerLogin([FromBody] SellerLoginRequest model)
+    {
+
+        if (string.IsNullOrEmpty(model.Username))
+        {
+            return BadRequest("Missing username");
+        }
+
+        if (string.IsNullOrEmpty(model.Password))
+        {
+            return BadRequest("Missing password");
+        }
+
+        var (loginResult, loginError) = await LoginWithResultsAsync(model.Username, model.Password, true);
+
+        if (loginError != null)
+        {
+            return StatusCode((int)HttpStatusCode.Forbidden, new { loginError });
+        }
+
+        if (loginResult == null)
+        {
+            return BadRequest("Unknown Error - loginResult is null");
+        }
+
+        var seller = await CustomerService.GetCustomerByGuidAsync(loginResult.CustomerGuid);
+
+        if (seller == null)
+            return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = "El vendedor no está autorizado" });
+
+        var customerRoles = await CustomerService.GetCustomerRolesAsync(seller);
+        var roleName = Constants.Roles.Seller.ToString();
+        var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
+        var apiSettings = await _settingService.LoadSettingAsync<ApiSettings>(storeScope);
+        bool isRoleEnabled = apiSettings.ToModel().EnabledRolesDic[roleName];
+        bool isCustomerInRole = customerRoles.FirstOrDefault(cr => cr.SystemName == roleName) != null;
+
+        if (!isRoleEnabled)
+        {
+            return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = "El rol de cliente no está habilitado" });
+        }
+
+        if (!isCustomerInRole)
+        {
+            return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = "El vendedor no está autorizado" });
+        }
+
+        return Ok(loginResult);
+    }
+
+    #nullable disable
 
     [HttpGet("check", Name = "ValidateToken")]
     [Authorize(Policy = JwtBearerDefaults.AuthenticationScheme, AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)] // this validates token
@@ -135,7 +212,8 @@ public class TokenController: BaseApiController
 
     #region Private methods
 
-    private async Task<IActionResult> LoginWithResultsAsync(string username, string password, bool rememberMe)
+    #nullable enable
+    private async Task<(TokenResponse? tokenResponse, string? loginError)> LoginWithResultsAsync(string username, string password, bool rememberMe)
     {
         var loginResult = await _customerRegistrationService.ValidateCustomerAsync(username, password);
 
@@ -155,24 +233,26 @@ public class TokenController: BaseApiController
                     // activity log
                     await CustomerActivityService.InsertActivityAsync(customer, "Api.TokenRequest", "API token request", customer);
 
-                    return Ok(tokenResponse);
+                    return (tokenResponse, null);
                 }
 
             case CustomerLoginResults.CustomerNotExist:
-                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.CustomerNotExist") });
+                return (null, await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.CustomerNotExist"));
             case CustomerLoginResults.Deleted:
-                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.Deleted") });
+                return (null, await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.Deleted"));
             case CustomerLoginResults.NotActive:
-                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotActive") });
+                return (null, await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotActive"));
             case CustomerLoginResults.NotRegistered:
-                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered") });
+                return (null, await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.NotRegistered"));
             case CustomerLoginResults.LockedOut:
-                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.LockedOut") });
+                return (null, await _localizationService.GetResourceAsync("Account.Login.WrongCredentials.LockedOut"));
             case CustomerLoginResults.WrongPassword:
             default:
-                return StatusCode((int)HttpStatusCode.Forbidden, new { loginError = await _localizationService.GetResourceAsync("Account.Login.WrongCredentials") });
+                return (null, await _localizationService.GetResourceAsync("Account.Login.WrongCredentials"));
         }
     }
+
+    #nullable disable
 
     private int GetTokenExpiryInDays()
     {
