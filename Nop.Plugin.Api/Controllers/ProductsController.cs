@@ -35,6 +35,7 @@ using DocumentFormat.OpenXml.Math;
 using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using MailKit.Search;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
+using static Nop.Services.ExportImport.ImportManager;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -368,6 +369,25 @@ public class ProductsController : BaseApiController
         };
 
         return OkResult(productsRootObject, fields);
+    }
+
+    [HttpGet("syncdata", Name = "ImportProductsPicturesFromJsonAsync")]
+    [Authorize(Policy = AdministratorsRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(ProductsRootObjectDto), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> ImportProductsPicturesFromJsonAsync(List<SkuPicture> skuPictureList)
+    {
+
+        var result = await _productApiService.ImportProductsPicturesFromJsonAsync(skuPictureList);
+
+        var productsRootObject = new
+        {
+            ProductsUpdated = result,
+            result.Count
+        };
+
+        return OkResult(productsRootObject);
     }
     #endregion
 }

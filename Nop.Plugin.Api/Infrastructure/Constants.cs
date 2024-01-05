@@ -7,7 +7,8 @@ public static class Constants
     public enum Roles
     {
         Registered,
-        Seller
+        Seller,
+        Administrators
     }
 
     public static class ViewNames

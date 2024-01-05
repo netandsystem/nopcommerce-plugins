@@ -59,187 +59,189 @@ using Newtonsoft.Json.Converters;
 
 public class ApiStartup : INopStartup
 {
-	public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
-	{
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
 
-		var apiConfigSection = configuration.GetSection("Api");
+        var apiConfigSection = configuration.GetSection("Api");
 
-		if (apiConfigSection != null)
-		{
-			var apiConfig = Singleton<AppSettings>.Instance.Get<ApiConfiguration>();
+        if (apiConfigSection != null)
+        {
+            var apiConfig = Singleton<AppSettings>.Instance.Get<ApiConfiguration>();
 
 
-			if (!string.IsNullOrEmpty(apiConfig.SecurityKey))
-			{
-				services.AddAuthentication(options =>
-				{
-					options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-					options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-				})
-						.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, jwtBearerOptions =>
-						{
-							jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
-							{
-								ValidateIssuerSigningKey = true,
-								IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiConfig.SecurityKey)),
-								ValidateIssuer = false, // ValidIssuer = "The name of the issuer",
-								ValidateAudience = false, // ValidAudience = "The name of the audience",
-								ValidateLifetime = true, // validate the expiration and not before values in the token
-								ClockSkew = TimeSpan.FromMinutes(apiConfig.AllowedClockSkewInMinutes)
-							};
-						});
+            if (!string.IsNullOrEmpty(apiConfig.SecurityKey))
+            {
+                services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                        .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, jwtBearerOptions =>
+                        {
+                            jwtBearerOptions.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuerSigningKey = true,
+                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(apiConfig.SecurityKey)),
+                                ValidateIssuer = false, // ValidIssuer = "The name of the issuer",
+                                ValidateAudience = false, // ValidAudience = "The name of the audience",
+                                ValidateLifetime = true, // validate the expiration and not before values in the token
+                                ClockSkew = TimeSpan.FromMinutes(apiConfig.AllowedClockSkewInMinutes)
+                            };
+                        });
 
-				JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-				AddAuthorizationPipeline(services);
-				services.AddHostedService<ApplicationPartsLogger>();
+                JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
+                AddAuthorizationPipeline(services);
+                services.AddHostedService<ApplicationPartsLogger>();
 
-			}
-		}
+            }
+        }
 
-		services.Configure<KestrelServerOptions>(options =>
-		{
-			options.AllowSynchronousIO = true;
-		});
-		services.Configure<IISServerOptions>(options =>
-		{
-			options.AllowSynchronousIO = true;
-		});
+        services.Configure<KestrelServerOptions>(options =>
+        {
+            options.AllowSynchronousIO = true;
+        });
+        services.Configure<IISServerOptions>(options =>
+        {
+            options.AllowSynchronousIO = true;
+        });
 
-		services.Configure<MvcNewtonsoftJsonOptions>(options =>
+        services.Configure<MvcNewtonsoftJsonOptions>(options =>
         {
             options.SerializerSettings.Converters.Add(new StringEnumConverter());
         });
 
         services.AddSwaggerGen(options =>
-		{
-			// api description >>
-			options.SwaggerDoc("v1", new OpenApiInfo { Title = "Nop API", Version = "v1" });
-			// auth definition >>
-			options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-			{
-				In = ParameterLocation.Header,
-				Description = "Please enter into field the word 'Bearer' following by space and JWT",
-				Name = "Authorization",
-				Type = SecuritySchemeType.ApiKey
-			});
-			options.AddSecurityRequirement(new OpenApiSecurityRequirement
-			{
-				{
-					new OpenApiSecurityScheme
-					{
-						Reference = new OpenApiReference
-						{
-							Type = ReferenceType.SecurityScheme,
-							Id = "Bearer"
-						}
-					},
-					Array.Empty<string>()
-				}
-			});
-			// custom type mappings >>
-			options.MapType<decimal>(() => new OpenApiSchema { Type = "number", Format = "decimal" }); // correct currency typings
-			//options.SchemaFilter<DeltaSchemaFilter>();
-			// TODO: options.UseAllOfToExtendReferenceSchemas(); // https://github.com/stepanbenes/api-for-nopcommerce/issues/16
-		});
+        {
+            // api description >>
+            options.SwaggerDoc("v1", new OpenApiInfo { Title = "Nop API", Version = "v1" });
+            // auth definition >>
+            options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
+                In = ParameterLocation.Header,
+                Description = "Please enter into field the word 'Bearer' following by space and JWT",
+                Name = "Authorization",
+                Type = SecuritySchemeType.ApiKey
+            });
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    Array.Empty<string>()
+                }
+            });
+            // custom type mappings >>
+            options.MapType<decimal>(() => new OpenApiSchema { Type = "number", Format = "decimal" }); // correct currency typings
+                                                                                                       //options.SchemaFilter<DeltaSchemaFilter>();
+                                                                                                       // TODO: options.UseAllOfToExtendReferenceSchemas(); // https://github.com/stepanbenes/api-for-nopcommerce/issues/16
+        });
         services.AddSwaggerGenNewtonsoftSupport();
 
     }
 
-	public void Configure(IApplicationBuilder app)
-	{
-		var environment = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
+    public void Configure(IApplicationBuilder app)
+    {
+        var environment = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
 
-		app.UseCors(x => x
-							.AllowAnyOrigin()
-							.AllowAnyMethod()
-							.AllowAnyHeader());
+        app.UseCors(x => x
+                            .AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader());
 
-		// Need to enable rewind so we can read the request body multiple times
-		//This should eventually be refactored, but both JsonModelBinder and all of the DTO validators need to read this stream.
-		//app.UseWhen(x => x.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase),
-		//            builder =>
-		//            {
-		//                builder.Use(async (context, next) =>
-		//                {
-		//                    Console.WriteLine("API Call");
-		//                    context.Request.EnableBuffering();
-		//                    await next();
-		//                });
-		//            });
+        // Need to enable rewind so we can read the request body multiple times
+        //This should eventually be refactored, but both JsonModelBinder and all of the DTO validators need to read this stream.
+        //app.UseWhen(x => x.Request.Path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase),
+        //            builder =>
+        //            {
+        //                builder.Use(async (context, next) =>
+        //                {
+        //                    Console.WriteLine("API Call");
+        //                    context.Request.EnableBuffering();
+        //                    await next();
+        //                });
+        //            });
 
-		app.MapWhen(context => context.Request.Path.StartsWithSegments(new PathString("/api")),
-			a =>
-			{
-				if (environment.IsDevelopment())
-				{
-					a.UseDeveloperExceptionPage();
-				}
+        app.MapWhen(context => context.Request.Path.StartsWithSegments(new PathString("/api")),
+            a =>
+            {
+                if (environment.IsDevelopment())
+                {
+                    a.UseDeveloperExceptionPage();
+                }
 
-				//a.Use(async (context, next) =>
-				//{
-				//	// API Call
-				//	context.Request.EnableBuffering();
-				//	await next();
-				//});
+                //a.Use(async (context, next) =>
+                //{
+                //	// API Call
+                //	context.Request.EnableBuffering();
+                //	await next();
+                //});
 
-				a.UseExceptionHandler(a => a.Run(async context =>
-				{
-					var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
-					var exceptionHandler = exceptionHandlerPathFeature;
-					if (exceptionHandler != null)
-					{
+                a.UseExceptionHandler(a => a.Run(async context =>
+                {
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    var exceptionHandler = exceptionHandlerPathFeature;
+                    if (exceptionHandler != null)
+                    {
                         var exception = exceptionHandler.Error;
                         await context.Response.WriteAsJsonAsync(new { error = exception.Message });
                     }
                 }));
 
-				a.UseRouting();
-				a.UseAuthentication();
-				a.UseAuthorization();
-				a.UseEndpoints(endpoints =>
-				{
-					endpoints.MapControllers();
-				});
+                a.UseRouting();
+                a.UseAuthentication();
+                a.UseAuthorization();
+                a.UseEndpoints(endpoints =>
+                {
+                    endpoints.MapControllers();
+                });
 
-				// swagger configuration
-				
-				// http://eatcodelive.com/2017/05/19/change-default-swagger-route-in-an-asp-net-core-web-api/
+                // swagger configuration
 
-				a.UseSwagger(options => options.RouteTemplate = "api/swagger/{documentName}/swagger.json");
-				a.UseSwaggerUI(c =>
-				{
-					c.RoutePrefix = "api/swagger";
-					c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "Nop.Plugin.Api v4.40");
-					c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
-				});
-				
-			}
-		);
-	}
+                // http://eatcodelive.com/2017/05/19/change-default-swagger-route-in-an-asp-net-core-web-api/
 
-	public int Order => 1;
-	private static void AddAuthorizationPipeline(IServiceCollection services)
-	{
-		services.AddAuthorization(options =>
-		{
-			{ 
-				options.AddPolicy(JwtBearerDefaults.AuthenticationScheme,
-									policy =>
-									{
-										policy.Requirements.Add(new ActiveApiPluginRequirement());
-										policy.Requirements.Add(new AuthorizationSchemeRequirement());
-										policy.RequireAuthenticatedUser();
-									});
+                a.UseSwagger(options => options.RouteTemplate = "api/swagger/{documentName}/swagger.json");
+                a.UseSwaggerUI(c =>
+                {
+                    c.RoutePrefix = "api/swagger";
+                    c.SwaggerEndpoint("/api/swagger/v1/swagger.json", "Nop.Plugin.Api v4.40");
+                    c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+                });
 
-				options.AddPolicy(RegisterRoleAuthorizationPolicy.Name, policy => policy.Requirements.Add(new CustomerRoleRequirement(Constants.Roles.Registered)));
+            }
+        );
+    }
+
+    public int Order => 1;
+    private static void AddAuthorizationPipeline(IServiceCollection services)
+    {
+        services.AddAuthorization(options =>
+        {
+            {
+                options.AddPolicy(JwtBearerDefaults.AuthenticationScheme,
+                                    policy =>
+                                    {
+                                        policy.Requirements.Add(new ActiveApiPluginRequirement());
+                                        policy.Requirements.Add(new AuthorizationSchemeRequirement());
+                                        policy.RequireAuthenticatedUser();
+                                    });
+
+                options.AddPolicy(RegisterRoleAuthorizationPolicy.Name, policy => policy.Requirements.Add(new CustomerRoleRequirement(Constants.Roles.Registered)));
 
                 options.AddPolicy(SellerRoleAuthorizationPolicy.Name, policy => policy.Requirements.Add(new CustomerRoleRequirement(Constants.Roles.Seller)));
-            };
-		});
 
-		services.AddSingleton<IAuthorizationHandler, ActiveApiPluginAuthorizationPolicy>();
-		services.AddSingleton<IAuthorizationHandler, ValidSchemeAuthorizationPolicy>();
-		services.AddSingleton<IAuthorizationHandler, RegisterRoleAuthorizationPolicy>();
-		services.AddSingleton<IAuthorizationHandler, SellerRoleAuthorizationPolicy>();
+                options.AddPolicy(AdministratorsRoleAuthorizationPolicy.Name, policy => policy.Requirements.Add(new CustomerRoleRequirement(Constants.Roles.Administrators)));
+            };
+        });
+
+        services.AddSingleton<IAuthorizationHandler, ActiveApiPluginAuthorizationPolicy>();
+        services.AddSingleton<IAuthorizationHandler, ValidSchemeAuthorizationPolicy>();
+        services.AddSingleton<IAuthorizationHandler, RegisterRoleAuthorizationPolicy>();
+        services.AddSingleton<IAuthorizationHandler, SellerRoleAuthorizationPolicy>();
     }
 }

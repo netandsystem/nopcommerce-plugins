@@ -23,6 +23,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Nop.Services.Payments;
 using Nop.Services.Shipping;
+using Nop.Services.ExportImport;
 
 namespace Nop.Plugin.Api.Infrastructure;
 
@@ -92,5 +93,7 @@ public class DependencyRegister : INopStartup
 
         services.AddScoped<IPaymentPluginManager, PaymentPluginManager>();
         services.AddScoped<IShippingService, ShippingService>();
+
+        services.AddScoped<IImportManager, ImportManager>();
     }
 }

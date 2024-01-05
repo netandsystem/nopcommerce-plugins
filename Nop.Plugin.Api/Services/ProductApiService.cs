@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using Nop.Data;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Vendors;
@@ -20,22 +19,15 @@ using Nop.Services.Customers;
 using Nop.Services.Security;
 using Nop.Services.Shipping.Date;
 using Nop.Core.Domain.Common;
-using Nop.Plugin.Api.Models;
 using Nop.Core.Domain.Media;
-using SkiaSharp;
-using System.Threading;
-using Microsoft.Extensions.FileProviders;
-using Nop.Services.Media;
-using DocumentFormat.OpenXml.Math;
-using LinqToDB.Common;
 using Nop.Core.Infrastructure;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Identity.Client;
-using Nop.Plugin.Api.AutoMapper;
 using System.Linq.Dynamic.Core;
-using MySqlX.XDevAPI.Common;
 using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.MappingExtensions;
+using Nop.Services.ExportImport;
+using static Nop.Services.ExportImport.ImportManager;
+
 
 namespace Nop.Plugin.Api.Services;
 
@@ -89,6 +81,8 @@ public class ProductApiService : IProductApiService
     private readonly MediaSettings _mediaSettings;
     private readonly IWebHelper _webHelper;
     private readonly IRepository<Picture> _pictureRepository;
+    private readonly IImportManager _importManager;
+
 
     #endregion
 
@@ -141,6 +135,8 @@ public class ProductApiService : IProductApiService
         MediaSettings mediaSettings,
         IWebHelper webHelper,
         IRepository<Picture> pictureRepository
+,
+        IImportManager importManager
 
     )
     {
@@ -190,6 +186,7 @@ public class ProductApiService : IProductApiService
         _mediaSettings = mediaSettings;
         _webHelper = webHelper;
         _pictureRepository = pictureRepository;
+        _importManager = importManager;
     }
 
     #endregion
@@ -318,8 +315,8 @@ public class ProductApiService : IProductApiService
         return query;
     }
 
-    
-    #nullable enable
+
+#nullable enable
 
     public virtual async Task<IPagedList<Product>> SearchProductsAsync(
         int page,
@@ -387,7 +384,7 @@ public class ProductApiService : IProductApiService
         return await query.ToListAsync();
     }
 
-    private  ProductDto JoinProductWithCategoryIds(ProductDto productDto, List<int> categoryIds)
+    private ProductDto JoinProductWithCategoryIds(ProductDto productDto, List<int> categoryIds)
     {
         productDto.CategoryIds = categoryIds;
 
@@ -397,12 +394,24 @@ public class ProductApiService : IProductApiService
     public async Task<List<ProductDto>> JoinProductsAndCategoriesAsync(IList<ProductDto> products)
     {
         var query = from product in products
-                    join productCategory in _productCategoryMappingRepository.Table 
+                    join productCategory in _productCategoryMappingRepository.Table
                     on product.Id equals productCategory.ProductId into CategoryGroup
                     select JoinProductWithCategoryIds(product, CategoryGroup.Select(x => x.CategoryId).ToList());
 
         return await query.ToListAsync();
     }
+
+
+    /// <summary>
+    /// Import products from XLSX file
+    /// </summary>
+    /// <param name="stream">Stream</param>
+    /// <returns>A task that represents the asynchronous operation</returns>
+    public virtual async Task<List<SkuPicture>> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList)
+    {
+        return await _importManager.ImportProductsPicturesFromSkuPictureAsync(skuPictureList);
+    }
+
 
     #endregion
 

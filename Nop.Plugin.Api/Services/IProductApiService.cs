@@ -7,6 +7,7 @@ using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.Infrastructure;
 using Nop.Plugin.Api.Models;
 using static Nop.Plugin.Api.Services.ProductApiService;
+using static Nop.Services.ExportImport.ImportManager;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -28,7 +29,7 @@ public interface IProductApiService
 
     Product GetProductByIdNoTracking(int productId);
 
-    #nullable enable
+#nullable enable
 
     Task<List<ProductDto>> JoinProductsAndPicturesAsync(IList<Product> products);
 
@@ -52,5 +53,7 @@ public interface IProductApiService
     );
 
     Task<List<ProductDto>> JoinProductsAndCategoriesAsync(IList<ProductDto> products);
+
+    Task<List<SkuPicture>> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList);
 
 }
