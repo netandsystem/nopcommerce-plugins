@@ -36,6 +36,7 @@ using DocumentFormat.OpenXml.Vml.Spreadsheet;
 using MailKit.Search;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using static Nop.Services.ExportImport.ImportManager;
+using Newtonsoft.Json;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -371,9 +372,9 @@ public class ProductsController : BaseApiController
         return OkResult(productsRootObject, fields);
     }
 
-    [HttpGet("syncdata", Name = "ImportProductsPicturesFromJsonAsync")]
+    [HttpPost("picture", Name = "ImportProductsPicturesFromJsonAsync")]
     [Authorize(Policy = AdministratorsRoleAuthorizationPolicy.Name)]
-    [ProducesResponseType(typeof(ProductsRootObjectDto), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ImportPictureResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     public async Task<IActionResult> ImportProductsPicturesFromJsonAsync(List<SkuPicture> skuPictureList)
@@ -381,13 +382,27 @@ public class ProductsController : BaseApiController
 
         var result = await _productApiService.ImportProductsPicturesFromJsonAsync(skuPictureList);
 
-        var productsRootObject = new
-        {
-            ProductsUpdated = result,
-            result.Count
-        };
+        ImportPictureResponse productsRootObject = new(result);
 
         return OkResult(productsRootObject);
+    }
+
+    [JsonObject(Title = "import_picture_response")]
+    public class ImportPictureResponse
+    {
+        public ImportPictureResponse(List<SkuPicture> productsUpdated)
+        {
+            ProductsUpdated = productsUpdated;
+            Count = productsUpdated.Count;
+        }
+
+        [JsonProperty("count")]
+        public int Count { get; set; }
+
+        [JsonProperty("products_updated")]
+        public List<SkuPicture> ProductsUpdated { get; set; }
+
+
     }
     #endregion
 }

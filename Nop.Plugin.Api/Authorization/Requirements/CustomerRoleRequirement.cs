@@ -14,6 +14,7 @@ using Nop.Plugin.Api.Infrastructure;
 using Nop.Plugin.Api.MappingExtensions;
 using Nop.Services.Configuration;
 using Nop.Services.Customers;
+using static Nop.Plugin.Api.Infrastructure.Constants;
 
 namespace Nop.Plugin.Api.Authorization.Requirements;
 
@@ -57,13 +58,43 @@ public class CustomerRoleRequirement : IAuthorizationRequirement
                 var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
                 var apiSettings = await _settingService.LoadSettingAsync<ApiSettings>(storeScope);
 
+                if (apiSettings.EnabledRolesDic.Count != System.Enum.GetValues(typeof(Roles)).Length)
+                {
+                    // find missing roles
+                    var missingRoles = new List<string>();
+                    foreach (Roles role in System.Enum.GetValues(typeof(Roles)))
+                    {
+
+                        if (!apiSettings.EnabledRolesDic.ContainsKey(role.ToString()))
+                        {
+                            missingRoles.Add(role.ToString());
+                        }
+                    }
+
+                    var dic = apiSettings.EnabledRolesDic;
+
+                    // add missing roles
+                    foreach (var missingRole in missingRoles)
+                    {
+                        dic.Add(missingRole, true);
+                    }
+
+                    apiSettings.EnabledRoles = System.Text.Json.JsonSerializer.Serialize(dic);
+
+                    // save settings
+                    await _settingService.SaveSettingAsync(apiSettings, x => x.EnabledRoles, storeScope, false);
+
+                    //now clear settings cache
+                    await _settingService.ClearCacheAsync();
+                }
+
                 bool isRoleEnabled = apiSettings.ToModel().EnabledRolesDic[_roleName];
                 bool isCustomerInRole = customerRoles.FirstOrDefault(cr => cr.SystemName == _roleName) != null;
 
                 return isRoleEnabled && isCustomerInRole;
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             Console.WriteLine("ERROR ON SECURITY POLICY ", ex.Message);
         }

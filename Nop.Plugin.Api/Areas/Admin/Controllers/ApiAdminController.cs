@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Nop.Core;
@@ -12,6 +13,7 @@ using Nop.Services.Messages;
 using Nop.Web.Framework;
 using Nop.Web.Framework.Controllers;
 using Nop.Web.Framework.Mvc.Filters;
+using static Nop.Plugin.Api.Infrastructure.Constants;
 
 namespace Nop.Plugin.Api.Areas.Admin.Controllers
 {
@@ -44,6 +46,31 @@ namespace Nop.Plugin.Api.Areas.Admin.Controllers
         {
             var storeScope = await _storeContext.GetActiveStoreScopeConfigurationAsync();
             var apiSettings = await _settingService.LoadSettingAsync<ApiSettings>(storeScope);
+
+            if (apiSettings.EnabledRolesDic.Count != System.Enum.GetValues(typeof(Roles)).Length)
+            {
+                // find missing roles
+                var missingRoles = new List<string>();
+                foreach (Roles role in System.Enum.GetValues(typeof(Roles)))
+                {
+
+                    if (!apiSettings.EnabledRolesDic.ContainsKey(role.ToString()))
+                    {
+                        missingRoles.Add(role.ToString());
+                    }
+                }
+
+                var dic = apiSettings.EnabledRolesDic;
+
+                // add missing roles
+                foreach (var missingRole in missingRoles)
+                {
+                    dic.Add(missingRole, true);
+                }
+
+                apiSettings.EnabledRoles = System.Text.Json.JsonSerializer.Serialize(dic);
+            }
+
             var model = apiSettings.ToModel();
 
             // Store Settings

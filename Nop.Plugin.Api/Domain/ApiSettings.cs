@@ -14,10 +14,21 @@ public class ApiSettings : ISettings
 
     public int TokenExpiryInDays { get; set; } = 0;
 
-    public string EnabledRoles { get; set; } = JsonSerializer.Serialize(
-        new Dictionary<string, bool>() {
-            { Constants.Roles.Registered.ToString(), true },
-            { Constants.Roles.Seller.ToString(), true},
+    public string EnabledRoles { get; set; } = JsonSerializer.Serialize(Constants.EnabledRolesDicDefault);
+
+    public Dictionary<string, bool> EnabledRolesDic
+    {
+        get
+        {
+            var obj = JsonSerializer.Deserialize<Dictionary<string, bool>>(EnabledRoles);
+
+            if (obj == null)
+            {
+                return Constants.EnabledRolesDicDefault;
+            }
+
+            return obj;
         }
-    );
+    }
+
 }

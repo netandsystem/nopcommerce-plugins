@@ -1,4 +1,5 @@
 ﻿using Nop.Core.Caching;
+using System.Collections.Generic;
 
 namespace Nop.Plugin.Api.Infrastructure;
 
@@ -9,6 +10,21 @@ public static class Constants
         Registered,
         Seller,
         Administrators
+    }
+
+    public static Dictionary<string, bool> EnabledRolesDicDefault
+    {
+        get
+        {
+            Dictionary<string, bool> config = new();
+
+            foreach (Roles role in System.Enum.GetValues(typeof(Roles)))
+            {
+                config.Add(role.ToString(), true);
+            }
+
+            return config;
+        }
     }
 
     public static class ViewNames

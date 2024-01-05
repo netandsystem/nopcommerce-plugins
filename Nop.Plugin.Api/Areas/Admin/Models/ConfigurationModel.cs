@@ -19,9 +19,6 @@ namespace Nop.Plugin.Api.Areas.Admin.Models
         public int ActiveStoreScopeConfiguration { get; set; }
 
         [NopResourceDisplayName("Plugins.Api.Admin.EnabledRoles")]
-        public Dictionary<string, bool> EnabledRolesDic { get; set; } = new() {
-            { Constants.Roles.Registered.ToString(), true },
-            { Constants.Roles.Seller.ToString(), true},
-        };
+        public Dictionary<string, bool> EnabledRolesDic { get; set; } = Constants.EnabledRolesDicDefault;
     }
 }
