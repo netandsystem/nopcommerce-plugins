@@ -54,6 +54,6 @@ public interface IProductApiService
 
     Task<List<ProductDto>> JoinProductsAndCategoriesAsync(IList<ProductDto> products);
 
-    Task<List<SkuPicture>> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList);
+    Task<(List<SkuPicture> productsUpdated, List<SkuPicture> productsRejected)> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList);
 
 }

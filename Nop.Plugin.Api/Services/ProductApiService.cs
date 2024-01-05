@@ -407,7 +407,7 @@ public class ProductApiService : IProductApiService
     /// </summary>
     /// <param name="stream">Stream</param>
     /// <returns>A task that represents the asynchronous operation</returns>
-    public virtual async Task<List<SkuPicture>> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList)
+    public virtual async Task<(List<SkuPicture> productsUpdated, List<SkuPicture> productsRejected)> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList)
     {
         return await _importManager.ImportProductsPicturesFromSkuPictureAsync(skuPictureList);
     }

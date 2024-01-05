@@ -380,29 +380,27 @@ public class ProductsController : BaseApiController
     public async Task<IActionResult> ImportProductsPicturesFromJsonAsync(List<SkuPicture> skuPictureList)
     {
 
-        var result = await _productApiService.ImportProductsPicturesFromJsonAsync(skuPictureList);
+        var (productsUpdated, productsRejected) = await _productApiService.ImportProductsPicturesFromJsonAsync(skuPictureList);
 
-        ImportPictureResponse productsRootObject = new(result);
+        ImportPictureResponse productsRootObject = new(productsUpdated, productsRejected);
 
         return OkResult(productsRootObject);
     }
 
-    [JsonObject(Title = "import_picture_response")]
     public class ImportPictureResponse
     {
-        public ImportPictureResponse(List<SkuPicture> productsUpdated)
+        public ImportPictureResponse(List<SkuPicture> productsUpdated, List<SkuPicture> productsRejected)
         {
             ProductsUpdated = productsUpdated;
-            Count = productsUpdated.Count;
+            CountUpdated = productsUpdated.Count;
+            ProductsRejected = productsRejected;
+            CountRejected = productsRejected.Count;
         }
 
-        [JsonProperty("count")]
-        public int Count { get; set; }
-
-        [JsonProperty("products_updated")]
+        public int CountUpdated { get; set; }
+        public int CountRejected { get; set; }
         public List<SkuPicture> ProductsUpdated { get; set; }
-
-
+        public List<SkuPicture> ProductsRejected { get; set; }
     }
     #endregion
 }
