@@ -412,7 +412,7 @@ public class ProductApiService : IProductApiService
 
         List<SkuPicture> realProductList = new();
 
-        foreach(var skuPicture in skuPictureList)
+        foreach (var skuPicture in skuPictureList)
         {
             if (!realProductList.Any(rp => rp.Sku == skuPicture.Sku))
             {
@@ -462,15 +462,15 @@ public class ProductApiService : IProductApiService
 
     private string GetPictureUrl(Picture picture, string imagesPathUrl)
     {
-        var seoFileName = picture.SeoFilename; // = GetPictureSeName(picture.SeoFilename); //just for sure
+        // var seoFileName = picture.SeoFilename; // = GetPictureSeName(picture.SeoFilename); //just for sure
 
         var lastPart = GetFileExtensionFromMimeTypeAsync(picture.MimeType);
 
-        string thumbFileName = !string.IsNullOrEmpty(seoFileName)
-            ? $"{picture.Id:0000000}_{seoFileName}.{lastPart}"
-            : $"{picture.Id:0000000}.{lastPart}";
+        string fileName = $"{picture.Id:0000000}_0.{lastPart}";
 
-        return GetThumbUrlAsync(thumbFileName, imagesPathUrl);
+        return imagesPathUrl + fileName;
+
+        //return GetThumbUrlAsync(thumbFileName, imagesPathUrl);
     }
 
     private string GetFileExtensionFromMimeTypeAsync(string mimeType)

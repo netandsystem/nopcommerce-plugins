@@ -27,6 +27,7 @@ public class PictureApiService<T, TDto, TPicture> where T : BaseEntity where TDt
 
     #endregion
 
+    #region Ctr
     public PictureApiService(
         IRepository<Picture> pictureRepository,
         IHttpContextAccessor httpContextAccessor,
@@ -40,11 +41,12 @@ public class PictureApiService<T, TDto, TPicture> where T : BaseEntity where TDt
         _webHelper = webHelper;
     }
 
+    #endregion
 
     public async Task<IList<TDto>> JoinProductsAndPicturesAsync(
-        IList<T> items, 
-        IRepository<TPicture> repository, 
-        Func<T, List<string>, TDto> toDto, 
+        IList<T> items,
+        IRepository<TPicture> repository,
+        Func<T, List<string>, TDto> toDto,
         Func<TPicture, Picture> getPictureFromTPicture,
         Func<TPicture, int>? getItemIdFromTPicture
     )
@@ -66,8 +68,8 @@ public class PictureApiService<T, TDto, TPicture> where T : BaseEntity where TDt
     }
 
     public async Task<TDto> AddPicturesToItemAsync(
-        IRepository<TPicture> repository, 
-        T item, 
+        IRepository<TPicture> repository,
+        T item,
         Func<T, List<string>, TDto> toDto,
         Func<TPicture, Picture> getPictureFromTPicture,
         Func<TPicture, int>? getItemIdFromTPicture
