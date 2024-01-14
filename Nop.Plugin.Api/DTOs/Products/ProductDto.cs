@@ -12,6 +12,7 @@ namespace Nop.Plugin.Api.DTO.Products;
 
 [JsonObject(Title = "product")]
 //[Validator(typeof(ProductDtoValidator))]
+
 public class ProductDto : BaseSyncDto
 {
 
@@ -59,8 +60,11 @@ public class ProductDto : BaseSyncDto
     [JsonProperty("price")]
     public decimal? Price { get; set; }
 
+#nullable enable
+
     [JsonProperty("images")]
-    public List<string> Images { get; set; }
+    public List<string>? Images { get; set; }
+#nullable disable
 
     [JsonProperty("stock_quantity")]
     public int StockQuantity { get; set; }

@@ -352,12 +352,10 @@ public class ProductApiService : IProductApiService
     {
         var pictures = await GetProductsPicturesAsync(products);
 
-        string imagePathUrl = await GetImagesPathUrlAsync();
-
         var query = from product in products
                     join picture in pictures
                     on product.Id equals picture.ProductId into productImagesGroup
-                    select product.ToDto(productImagesGroup.Select(item => GetPictureUrl(item.Picture, imagePathUrl)).ToList());
+                    select product.ToDto(productImagesGroup.Select(item => GetPictureFile(item.Picture)).ToList());
 
         return query.ToList();
     }
@@ -432,6 +430,66 @@ public class ProductApiService : IProductApiService
         return (productsUpdatedSP, productsRejectedSP);
     }
 
+    public List<List<string?>> GetProductsCompressed(IList<ProductDto> products)
+    {
+        /*
+           [
+             id,
+             deleted,
+             updated_on_ts,
+             name,
+             price,
+             sku,
+             short_description,
+             images,
+             is_tax_exempt,
+             stock_quantity,
+             published,
+             category_ids,
+           ]
+        */
+
+        //return products.Select(p =>
+        //    new List<string?>() {
+        //        p.Id.ToString(),
+        //        p.Deleted.ToString(),
+        //        p.UpdatedOnTs.ToString(),
+        //        p.Name,
+        //        p.Price.ToString(),
+        //        p.Sku,
+        //        p.ShortDescription,
+        //        p.Images.FirstOrDefault(),
+        //        p.IsTaxExempt.ToString(),
+        //        p.StockQuantity.ToString(),
+        //        p.Published.ToString(),
+        //        p.CategoryIds?.FirstOrDefault().ToString()
+        //    }
+        //).ToList();
+
+        List<List<string?>> compressedProducts = new();
+
+        foreach (var p in products)
+        {
+            var compressedItem = new List<string?>() {
+                    p.Id.ToString(),
+                    p.Deleted.ToString(),
+                    p.UpdatedOnTs.ToString(),
+                    p.Name,
+                    p.Price.ToString(),
+                    p.Sku,
+                    p.ShortDescription,
+                    p.Images?.FirstOrDefault(),
+                    p.IsTaxExempt.ToString(),
+                    p.StockQuantity.ToString(),
+                    p.Published.ToString(),
+                    p.CategoryIds?.FirstOrDefault().ToString()
+                };
+
+            compressedProducts.Add(compressedItem);
+        }
+
+        return compressedProducts;
+    }
 
     #endregion
 
@@ -458,6 +516,13 @@ public class ProductApiService : IProductApiService
                     select new InternalProductPicture(picture, pp.ProductId);
 
         return query;
+    }
+
+    private string GetPictureFile(Picture picture)
+    {
+        var lastPart = GetFileExtensionFromMimeTypeAsync(picture.MimeType);
+
+        return $"{picture.Id:0000000}_0.{lastPart}";
     }
 
     private string GetPictureUrl(Picture picture, string imagesPathUrl)

@@ -372,6 +372,32 @@ public class ProductsController : BaseApiController
         return OkResult(productsRootObject, fields);
     }
 
+
+    [HttpGet("syncdata2", Name = "SyncProducts2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(List<List<string?>>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SyncData2(long? lastUpdateTs)
+    {
+        DateTime? lastUpdateUtc = null;
+
+        if (lastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
+        }
+
+        var products = await _productApiService.GetLastestUpdatedProducts(lastUpdateUtc);
+
+        var result = await _productApiService.JoinProductsAndPicturesAsync(products);
+
+        result = await _productApiService.JoinProductsAndCategoriesAsync(result);
+
+        var compressed = _productApiService.GetProductsCompressed(result);
+
+        return Ok(compressed);
+    }
+
     [HttpPost("picture", Name = "ImportProductsPicturesFromJsonAsync")]
     [Authorize(Policy = AdministratorsRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(ImportPictureResponse), (int)HttpStatusCode.OK)]

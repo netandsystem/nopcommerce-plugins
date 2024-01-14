@@ -56,4 +56,6 @@ public interface IProductApiService
 
     Task<(List<SkuPicture> productsUpdated, List<SkuPicture> productsRejected)> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList);
 
+    List<List<string?>> GetProductsCompressed(IList<ProductDto> products);
+
 }
