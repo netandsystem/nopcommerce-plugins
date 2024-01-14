@@ -26,6 +26,8 @@ using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Core.Domain.Catalog;
 using System.Text;
+using Nop.Plugin.Api.DTOs.Base;
+using MySqlX.XDevAPI.Common;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -46,10 +48,10 @@ public class CustomerApiService : ICustomerApiService
     private static readonly string PHONE = NopCustomerDefaults.PhoneAttribute.ToLowerInvariant();
 
     private readonly IStaticCacheManager _cacheManager;
-	private readonly IAddressApiService _addressApiService;
-	private readonly IGenericAttributeService _genericAttributeService;
-	private readonly ICurrencyService _currencyService;
-	private readonly IRepository<Customer> _customerRepository;
+    private readonly IAddressApiService _addressApiService;
+    private readonly IGenericAttributeService _genericAttributeService;
+    private readonly ICurrencyService _currencyService;
+    private readonly IRepository<Customer> _customerRepository;
     private readonly IRepository<GenericAttribute> _genericAttributeRepository;
     private readonly ILanguageService _languageService;
 
@@ -87,13 +89,13 @@ public class CustomerApiService : ICustomerApiService
         _customerRepository = customerRepository;
         _genericAttributeRepository = genericAttributeRepository;
         _subscriptionRepository = subscriptionRepository;
-		_storeContext = storeContext;
+        _storeContext = storeContext;
         _languageService = languageService;
         _storeMappingService = storeMappingService;
         _cacheManager = staticCacheManager;
-		_addressApiService = addressApiService;
-		_genericAttributeService = genericAttributeService;
-		_currencyService = currencyService;
+        _addressApiService = addressApiService;
+        _genericAttributeService = genericAttributeService;
+        _currencyService = currencyService;
         _customerService = customerService;
         _customerRoleRepository = customerRoleRepository;
         _customerCustomerRoleMappingRepository = customerCustomerRoleMappingRepository;
@@ -167,7 +169,7 @@ public class CustomerApiService : ICustomerApiService
 
                 await SetCustomerAddressesAsync(customer, customerDto);
             }
-        }            
+        }
 
         return result;
     }
@@ -197,15 +199,15 @@ public class CustomerApiService : ICustomerApiService
 
         // Here we expect to get two records, one for the first name and one for the last name.
         var customerAttributeMappings = await (from c in _customerRepository.Table //NoTracking
-                                         join a in _genericAttributeRepository.Table //NoTracking
-                                             on c.Id equals a.EntityId
-                                         where c.Id == id &&
-                                               a.KeyGroup == nameof(Customer)
+                                               join a in _genericAttributeRepository.Table //NoTracking
+                                                   on c.Id equals a.EntityId
+                                               where c.Id == id &&
+                                                     a.KeyGroup == nameof(Customer)
                                                select new CustomerAttributeMappingDto
-                                         {
-                                             Attribute = a,
-                                             Customer = c
-                                         }).ToListAsync();
+                                               {
+                                                   Attribute = a,
+                                                   Customer = c
+                                               }).ToListAsync();
 
         Customer customer = null;
         CustomerDto customerDto = null;
@@ -286,7 +288,7 @@ public class CustomerApiService : ICustomerApiService
         return customerDto;
     }
 
-    #nullable enable
+#nullable enable
 
     public async Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers)
     {
@@ -316,7 +318,7 @@ public class CustomerApiService : ICustomerApiService
                     join customerRoleMap in _customerCustomerRoleMappingRepository.Table
                         on customer.Id equals customerRoleMap.CustomerId
                         into customerRoleList
-                    where  (lastUpdateUtc == null || customer.UpdatedOnUtc > lastUpdateUtc)
+                    where (lastUpdateUtc == null || customer.UpdatedOnUtc > lastUpdateUtc)
                         && customerRoleList.Any(r => r.Id == registeredRole.Id)
                         && customerRoleList.All(r => r.Id != sellerRole.Id)
                         && customer.SellerId == seller.Id
@@ -352,6 +354,31 @@ public class CustomerApiService : ICustomerApiService
         return customersDto;
     }
 
+    public async Task<BaseSyncResponse<CustomerDto>> GetLastestUpdatedCustomersAsync(
+        IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
+    )
+    {
+        var customersDto = await GetLastestUpdatedCustomersAsync(lastUpdateUtc);
+
+        var customersThatBelogToSeller = customersDto.Where(x => x.SellerId == SellerId).ToList();
+        customersThatBelogToSeller = await JoinCustomerDtosWithCustomerAttributesAsync(customersThatBelogToSeller);
+
+        var customersThatNotBelogToSeller = customersDto.Where(x => x.SellerId != SellerId).ToList();
+
+        List<CustomerDto> customersToInsert = new();
+        List<CustomerDto> customersToUpdate = new();
+        List<CustomerDto> customersToDelete = new();
+
+        customersToInsert = customersThatBelogToSeller.Where(x => !customersIds.Contains(x.Id)).ToList();
+        customersToUpdate = customersThatBelogToSeller.Where(x => customersIds.Contains(x.Id)).ToList();
+        customersToDelete = customersThatNotBelogToSeller.Where(x => customersIds.Contains(x.Id)).ToList();
+
+        var customerToSave = customersToInsert.Concat(customersToUpdate).ToList();
+        var customersIdsToDelete = customersToDelete.Select(x => x.Id).ToList();
+
+        return new BaseSyncResponse<CustomerDto>(customerToSave, customersIdsToDelete);
+    }
+
     public async Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers)
     {
         var query = from customer in customers
@@ -365,7 +392,7 @@ public class CustomerApiService : ICustomerApiService
         return await query.ToListAsync();
     }
 
-    #nullable disable
+#nullable disable
 
     #endregion
 
@@ -571,7 +598,7 @@ public class CustomerApiService : ICustomerApiService
                 {
                     customerDto.LastName = attribute.Value;
                 }
-                
+
             }
         }
 
@@ -583,8 +610,8 @@ public class CustomerApiService : ICustomerApiService
     {
         // Here we filter the customerAttributesGroups to be only the ones that have the passed key parameter as a key.
         var filteredCustomerAttributes = from a in customerAttributes
-                                             where a.Attribute.Key.Equals(key) && a.Attribute.Value.Equals(value)
-                                             select a;
+                                         where a.Attribute.Key.Equals(key) && a.Attribute.Value.Equals(value)
+                                         select a;
 
         return filteredCustomerAttributes;
     }
@@ -657,11 +684,11 @@ public class CustomerApiService : ICustomerApiService
             customerDto.BillingAddress = await _addressApiService.GetCustomerAddressAsync(customer.Id, customer.BillingAddressId.Value);
         else
             customerDto.BillingAddress = null;
-        
+
     }
 
-	public async Task<Language> GetCustomerLanguageAsync(Customer customer)
-		{
+    public async Task<Language> GetCustomerLanguageAsync(Customer customer)
+    {
         //var store = await _storeContext.GetCurrentStoreAsync();
 
         //get current customer language identifier
@@ -698,13 +725,13 @@ public class CustomerApiService : ICustomerApiService
     }
 
     public async Task SetCustomerLanguageAsync(Customer customer, Language language)
-		{
+    {
         //var store = await _storeContext.GetCurrentStoreAsync();
         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.LanguageIdAttribute, language?.Id ?? 0/*, store.Id*/);
     }
 
-	public async Task<Currency> GetCustomerCurrencyAsync(Customer customer)
-	{
+    public async Task<Currency> GetCustomerCurrencyAsync(Customer customer)
+    {
         //var store = await _storeContext.GetCurrentStoreAsync();
 
         //find a currency previously selected by a customer
@@ -741,13 +768,13 @@ public class CustomerApiService : ICustomerApiService
         //return customerCurrency;
     }
 
-	public async Task SetCustomerCurrencyAsync(Customer customer, Currency currency)
-	{
+    public async Task SetCustomerCurrencyAsync(Customer customer, Currency currency)
+    {
         //var store = await _storeContext.GetCurrentStoreAsync();
         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.CurrencyIdAttribute, currency?.Id ?? 0/*, store.Id*/);
     }
 
-    #nullable enable
+#nullable enable
     private CustomerDto AddAddressesToCustomerDto(Customer customer, IList<Address> addresses)
     {
         var customerDto = customer.ToDto();

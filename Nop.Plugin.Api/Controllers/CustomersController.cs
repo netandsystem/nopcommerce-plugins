@@ -212,6 +212,45 @@ public class CustomersController : BaseApiController
     /// <param name="fields">Fields from the customer you want your json to contain</param>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
+    [HttpPost("syncdata2", Name = "SyncCustomers2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    //[GetRequestsErrorInterceptorActionFilter]
+    public async Task<IActionResult> SyncData2([FromBody] CustomersSync2ParametersModel body)
+    {
+        var sellerEntity = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (sellerEntity is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        DateTime? lastUpdateUtc = null;
+
+        if (body.LastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
+        }
+
+        var result = await _customerApiService.GetLastestUpdatedCustomersAsync(
+                body.CutomersIds,
+                lastUpdateUtc,
+                sellerEntity.Id
+            );
+
+        return Ok(result);
+    }
+
+
+    /// <summary>
+    ///     Retrieve current customer
+    /// </summary>
+    /// <param name="fields">Fields from the customer you want your json to contain</param>
+    /// <response code="200">OK</response>
+    /// <response code="401">Unauthorized</response>
     [HttpGet(Name = "GetCurrentCustomer")]
     [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
