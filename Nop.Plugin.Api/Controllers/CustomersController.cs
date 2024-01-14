@@ -45,6 +45,8 @@ using Nop.Plugin.Api.DTOs.ShoppingCarts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
+using Nop.Plugin.Api.DTO.Base;
+using Nop.Plugin.Api.DTOs.Base;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -214,7 +216,7 @@ public class CustomersController : BaseApiController
     /// <response code="401">Unauthorized</response>
     [HttpPost("syncdata2", Name = "SyncCustomers2")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
-    [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseSyncResponse<CustomerDto>), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]

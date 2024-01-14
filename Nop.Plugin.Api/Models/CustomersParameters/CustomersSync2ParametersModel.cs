@@ -21,7 +21,7 @@ public class CustomersSync2ParametersModel
     [JsonProperty("cutomers_ids", Required = Required.Always)]
     public List<int> CutomersIds { get; set; }
 
-    [JsonProperty("last_update_ts", Required = Required.Always)]
+    [JsonProperty("last_update_ts", Required = Required.AllowNull)]
     public long? LastUpdateTs { get; set; }
 
     [JsonProperty("fields", Required = Required.AllowNull)]
