@@ -393,7 +393,7 @@ public class ProductsController : BaseApiController
 
         result = await _productApiService.JoinProductsAndCategoriesAsync(result);
 
-        var compressed = _productApiService.GetProductsCompressed(result);
+        var compressed = _productApiService.GetItemsCompressed(result);
 
         return Ok(compressed);
     }

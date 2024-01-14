@@ -47,6 +47,7 @@ using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Plugin.Api.DTO.Base;
 using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.Models.Base;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -221,7 +222,7 @@ public class CustomersController : BaseApiController
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     //[GetRequestsErrorInterceptorActionFilter]
-    public async Task<IActionResult> SyncData2([FromBody] CustomersSync2ParametersModel body)
+    public async Task<IActionResult> SyncData2([FromBody] Sync2ParametersModel body)
     {
         var sellerEntity = await _authenticationService.GetAuthenticatedCustomerAsync();
 
@@ -238,7 +239,7 @@ public class CustomersController : BaseApiController
         }
 
         var result = await _customerApiService.GetLastestUpdatedCustomersAsync(
-                body.CutomersIds,
+                body.Ids,
                 lastUpdateUtc,
                 sellerEntity.Id
             );

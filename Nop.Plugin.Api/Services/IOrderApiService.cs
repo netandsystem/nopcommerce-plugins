@@ -6,6 +6,7 @@ using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Payments;
 using Nop.Core.Domain.Shipping;
 using Nop.Plugin.Api.DTO.Orders;
+using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Infrastructure;
 using Nop.Services.Orders;
 
@@ -31,6 +32,13 @@ public interface IOrderApiService
     Task<PlaceOrderResult> PlaceOrderAsync(OrderPost newOrder, Customer customer, int storeId, IList<ShoppingCartItem> cart);
 
     Task<List<OrderDto>> GetLastestUpdatedItemsAsync(DateTime? lastUpdateUtc, int sellerId, int storeId);
+
+#nullable enable
+
+    Task<List<List<string?>>> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId);
+
+    List<List<string?>> GetItemsCompressed(IList<OrderDto> items);
+
 
     //IList<Order> GetOrders(
     //    IList<int> ids = null, DateTime? createdAtMin = null, DateTime? createdAtMax = null,

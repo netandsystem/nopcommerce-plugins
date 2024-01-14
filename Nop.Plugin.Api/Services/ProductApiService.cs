@@ -430,7 +430,7 @@ public class ProductApiService : IProductApiService
         return (productsUpdatedSP, productsRejectedSP);
     }
 
-    public List<List<string?>> GetProductsCompressed(IList<ProductDto> products)
+    public List<List<string?>> GetItemsCompressed(IList<ProductDto> products)
     {
         /*
            [
@@ -449,46 +449,22 @@ public class ProductApiService : IProductApiService
            ]
         */
 
-        //return products.Select(p =>
-        //    new List<string?>() {
-        //        p.Id.ToString(),
-        //        p.Deleted.ToString(),
-        //        p.UpdatedOnTs.ToString(),
-        //        p.Name,
-        //        p.Price.ToString(),
-        //        p.Sku,
-        //        p.ShortDescription,
-        //        p.Images.FirstOrDefault(),
-        //        p.IsTaxExempt.ToString(),
-        //        p.StockQuantity.ToString(),
-        //        p.Published.ToString(),
-        //        p.CategoryIds?.FirstOrDefault().ToString()
-        //    }
-        //).ToList();
-
-        List<List<string?>> compressedProducts = new();
-
-        foreach (var p in products)
-        {
-            var compressedItem = new List<string?>() {
-                    p.Id.ToString(),
-                    p.Deleted.ToString(),
-                    p.UpdatedOnTs.ToString(),
-                    p.Name,
-                    p.Price.ToString(),
-                    p.Sku,
-                    p.ShortDescription,
-                    p.Images?.FirstOrDefault(),
-                    p.IsTaxExempt.ToString(),
-                    p.StockQuantity.ToString(),
-                    p.Published.ToString(),
-                    p.CategoryIds?.FirstOrDefault().ToString()
-                };
-
-            compressedProducts.Add(compressedItem);
-        }
-
-        return compressedProducts;
+        return products.Select(p =>
+            new List<string?>() {
+                p.Id.ToString(),
+                p.Deleted.ToString(),
+                p.UpdatedOnTs.ToString(),
+                p.Name,
+                p.Price.ToString(),
+                p.Sku,
+                p.ShortDescription,
+                p.Images?.FirstOrDefault(),
+                p.IsTaxExempt.ToString(),
+                p.StockQuantity.ToString(),
+                p.Published.ToString(),
+                p.CategoryIds?.FirstOrDefault().ToString()
+            }
+        ).ToList();
     }
 
     #endregion

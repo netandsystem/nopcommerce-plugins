@@ -50,6 +50,7 @@ using Nop.Core.Domain.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Core.Domain.News;
+using Nop.Plugin.Api.Models.Base;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -298,6 +299,39 @@ public class OrdersController : BaseApiController
         return OkResult(ordersRootObject, fields);
     }
 
+    /// <summary>
+    ///     Receive a list of all Orders
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpGet("syncdata2", Name = "SyncOrders2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(OrdersRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> SyncData2([FromBody] Sync2ParametersModel body)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var storeId = _storeContext.GetCurrentStore().Id;
+
+        DateTime? lastUpdateUtc = null;
+
+        if (body.LastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
+        }
+
+        var result = await _orderApiService.GetLastestUpdatedItems2Async(lastUpdateUtc, seller.Id, storeId);
+
+        return OkResult(result);
+    }
 
 
     /// <summary>

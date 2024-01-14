@@ -5,21 +5,21 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Nop.Plugin.Api.Models.CustomersParameters;
+namespace Nop.Plugin.Api.Models.Base;
 
 #nullable enable
 
-public class CustomersSync2ParametersModel
+public class Sync2ParametersModel
 {
-    public CustomersSync2ParametersModel(List<int> cutomersIds, long? lastUpdateTs, string? fields)
+    public Sync2ParametersModel(List<int> ids, long? lastUpdateTs, string? fields)
     {
-        CutomersIds = cutomersIds;
+        Ids = ids;
         LastUpdateTs = lastUpdateTs;
         Fields = fields;
     }
 
-    [JsonProperty("cutomers_ids", Required = Required.Always)]
-    public List<int> CutomersIds { get; set; }
+    [JsonProperty("ids", Required = Required.Always)]
+    public List<int> Ids { get; set; }
 
     [JsonProperty("last_update_ts", Required = Required.AllowNull)]
     public long? LastUpdateTs { get; set; }

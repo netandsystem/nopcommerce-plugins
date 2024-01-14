@@ -26,6 +26,8 @@ using Nop.Core;
 using Nop.Services.Localization;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.DTO.OrderItems;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -211,9 +213,9 @@ public class OrderApiService : IOrderApiService
             }
 
             //set value indicating that "pick up in store" option has not been chosen
-            #nullable disable
+#nullable disable
             await _genericAttributeService.SaveAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, null, storeId);
-            #nullable enable
+#nullable enable
 
             //find shipping method
             //performance optimization. try cache first
@@ -282,7 +284,7 @@ public class OrderApiService : IOrderApiService
                 page: null,
                 status: null,
                 paymentStatus: null,
-                shippingStatus:     null,
+                shippingStatus: null,
                 storeId: storeId,
                 orderByDateDesc: false,
                 createdAtMin: null,
@@ -290,6 +292,83 @@ public class OrderApiService : IOrderApiService
                 sellerId: sellerId,
                 lastUpdateUtc: lastUpdateUtc
             );
+    }
+
+
+    public async Task<List<List<string?>>> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId)
+    {
+        // get date 4 months ago
+        var createdAtMin = DateTime.UtcNow.AddMonths(-4);
+
+        var items = await GetOrders(
+                customerId: null,
+                limit: null,
+                page: null,
+                status: null,
+                paymentStatus: null,
+                shippingStatus: null,
+                storeId: storeId,
+                orderByDateDesc: false,
+                createdAtMin: createdAtMin,
+                createdAtMax: null,
+                sellerId: sellerId,
+                lastUpdateUtc: lastUpdateUtc
+            );
+
+        return GetItemsCompressed(items);
+    }
+
+
+    public List<List<string?>> GetItemsCompressed(IList<OrderDto> items)
+    {
+        /*
+            [
+              id,   string
+              deleted,  boolean
+              updated_on_ts,  number
+              order_shipping_excl_tax,  number
+              order_discount,  number
+              custom_values,  json
+              customer_id,  number
+              billing_address_id,  number
+              order_items,  json
+              order_status,  string
+            ]
+      */
+
+        return items.Select(p =>
+            new List<string?>() {
+                p.Id.ToString(),
+                p.Deleted.ToString(),
+                p.UpdatedOnTs.ToString(),
+                p.OrderShippingExclTax.ToString(),
+                p.OrderDiscount.ToString(),
+                p.CustomValues is null || p.CustomValues.Count == 0 ? null : JsonSerializer.Serialize(p.CustomValues),
+                p.CustomerId.ToString(),
+                p.BillingAddress.Id.ToString(),
+                p.OrderItems is null || p.OrderItems.Count == 0 ? null : JsonSerializer.Serialize(GetOrderItemsCompressed(p.OrderItems.ToList())),
+                p.OrderStatus.ToString()
+            }
+        ).ToList();
+    }
+
+    private List<List<string?>> GetOrderItemsCompressed(IList<OrderItemDto> items)
+    {
+        /*
+            [
+              product_id,  number
+              unit_price_excl_tax,  number
+              quantity,  number
+            ]
+        */
+
+        return items.Select(p =>
+            new List<string?>() {
+                p.ProductId.ToString(),
+                p.UnitPriceExclTax.ToString(),
+                p.Quantity.ToString(),
+            }
+        ).ToList();
     }
 
 
