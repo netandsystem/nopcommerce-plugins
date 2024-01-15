@@ -101,6 +101,27 @@ public class CategoriesController : BaseApiController
         return OkResult(rootObject, fields);
     }
 
+    [HttpGet("syncdata2", Name = "SyncCategories2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(CategoriesRootObject), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SyncData2(long? lastUpdateTs)
+    {
+        DateTime? lastUpdateUtc = null;
+
+        if (lastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
+        }
+
+        var categoriesDto = await _categoryApiService.GetLastestUpdatedCategoriesAsync(lastUpdateUtc);
+
+        var result = _categoryApiService.GetItemsCompressed(categoriesDto);
+
+        return Ok(result);
+    }
+
     /// <summary>
     ///     Receive a list of all Categories
     /// </summary>

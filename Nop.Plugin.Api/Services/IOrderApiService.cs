@@ -35,9 +35,9 @@ public interface IOrderApiService
 
 #nullable enable
 
-    Task<List<List<string?>>> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId);
+    Task<List<List<object?>>> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId);
 
-    List<List<string?>> GetItemsCompressed(IList<OrderDto> items);
+    List<List<object?>> GetItemsCompressed(IList<OrderDto> items);
 
 
     //IList<Order> GetOrders(

@@ -295,7 +295,7 @@ public class OrderApiService : IOrderApiService
     }
 
 
-    public async Task<List<List<string?>>> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId)
+    public async Task<List<List<object?>>> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId)
     {
         // get date 4 months ago
         var createdAtMin = DateTime.UtcNow.AddMonths(-4);
@@ -319,7 +319,7 @@ public class OrderApiService : IOrderApiService
     }
 
 
-    public List<List<string?>> GetItemsCompressed(IList<OrderDto> items)
+    public List<List<object?>> GetItemsCompressed(IList<OrderDto> items)
     {
         /*
             [
@@ -337,22 +337,23 @@ public class OrderApiService : IOrderApiService
         */
 
         return items.Select(p =>
-            new List<string?>() {
-                p.Id.ToString(),
-                p.Deleted.ToString(),
-                p.UpdatedOnTs.ToString(),
-                p.OrderShippingExclTax.ToString(),
-                p.OrderDiscount.ToString(),
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.OrderShippingExclTax,
+                p.OrderDiscount,
                 p.CustomValues is null || p.CustomValues.Count == 0 ? null : JsonSerializer.Serialize(p.CustomValues),
-                p.CustomerId.ToString(),
-                p.BillingAddress.Id.ToString(),
-                p.OrderItems is null || p.OrderItems.Count == 0 ? null : JsonSerializer.Serialize(GetOrderItemsCompressed(p.OrderItems.ToList())),
-                p.OrderStatus.ToString()
+                p.CustomerId,
+                p.BillingAddress.Id,
+                p.OrderItems is null || p.OrderItems.Count == 0 ? null :
+                GetOrderItemsCompressed(p.OrderItems.ToList()),
+                p.OrderStatus
             }
         ).ToList();
     }
 
-    private List<List<string?>> GetOrderItemsCompressed(IList<OrderItemDto> items)
+    private List<List<object?>> GetOrderItemsCompressed(IList<OrderItemDto> items)
     {
         /*
             [
@@ -363,10 +364,10 @@ public class OrderApiService : IOrderApiService
         */
 
         return items.Select(p =>
-            new List<string?>() {
-                p.ProductId.ToString(),
-                p.UnitPriceExclTax.ToString(),
-                p.Quantity.ToString(),
+            new List<object?>() {
+                p.ProductId,
+                p.UnitPriceExclTax,
+                p.Quantity,
             }
         ).ToList();
     }

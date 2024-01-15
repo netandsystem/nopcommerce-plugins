@@ -18,19 +18,19 @@ public class CategoryApiService : ICategoryApiService
     private readonly IRepository<Category> _categoryRepository;
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
     private readonly IStoreMappingService _storeMappingService;
-		private readonly ICategoryService _categoryService;
+    private readonly ICategoryService _categoryService;
 
-		public CategoryApiService(
-        IRepository<Category> categoryRepository,
-        IRepository<ProductCategory> productCategoryMappingRepository,
-        IStoreMappingService storeMappingService,
-        ICategoryService categoryService)
+    public CategoryApiService(
+    IRepository<Category> categoryRepository,
+    IRepository<ProductCategory> productCategoryMappingRepository,
+    IStoreMappingService storeMappingService,
+    ICategoryService categoryService)
     {
         _categoryRepository = categoryRepository;
         _productCategoryMappingRepository = productCategoryMappingRepository;
         _storeMappingService = storeMappingService;
-			this._categoryService = categoryService;
-		}
+        this._categoryService = categoryService;
+    }
 
     public IList<Category> GetCategories(
         IList<int> ids = null,
@@ -138,13 +138,42 @@ public class CategoryApiService : ICategoryApiService
         return query;
     }
 
+#nullable enable
+
+
     public async Task<List<CategoryDto>> GetLastestUpdatedCategoriesAsync(DateTime? lastUpdateUtc)
     {
-        
-         var query = from item in _categoryRepository.Table
+
+        var query = from item in _categoryRepository.Table
                     where lastUpdateUtc == null || item.UpdatedOnUtc > lastUpdateUtc
                     select item.ToDto();
 
         return await query.ToListAsync();
+    }
+
+    public List<List<object?>> GetItemsCompressed(IList<CategoryDto> items)
+    {
+        /*
+          [
+            id, number
+            deleted,  boolean
+            updated_on_ts,  number
+
+            name, string
+            parent_category_id, number
+            published, boolean
+          ]
+        */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.Name,
+                p.ParentCategoryId,
+                p.Published
+            }
+        ).ToList();
     }
 }

@@ -26,8 +26,10 @@ using Nop.Services.Common;
 using Nop.Services.Directory;
 using Nop.Core.Domain.Catalog;
 using System.Text;
+using System.Text.Json;
 using Nop.Plugin.Api.DTOs.Base;
 using MySqlX.XDevAPI.Common;
+using Nop.Plugin.Api.DTO;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -354,7 +356,7 @@ public class CustomerApiService : ICustomerApiService
         return customersDto;
     }
 
-    public async Task<BaseSyncResponse<CustomerDto>> GetLastestUpdatedCustomersAsync(
+    public async Task<BaseSyncResponse<List<object?>>> GetLastestUpdatedCustomersAsync(
         IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
     )
     {
@@ -373,10 +375,10 @@ public class CustomerApiService : ICustomerApiService
         customersToUpdate = customersThatBelogToSeller.Where(x => customersIds.Contains(x.Id)).ToList();
         customersToDelete = customersThatNotBelogToSeller.Where(x => customersIds.Contains(x.Id)).ToList();
 
-        var customerToSave = customersToInsert.Concat(customersToUpdate).ToList();
+        var customerToSave = GetItemsCompressed(customersToInsert.Concat(customersToUpdate).ToList());
         var customersIdsToDelete = customersToDelete.Select(x => x.Id).ToList();
 
-        return new BaseSyncResponse<CustomerDto>(customerToSave, customersIdsToDelete);
+        return new BaseSyncResponse<List<object?>>(customerToSave, customersIdsToDelete);
     }
 
     public async Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers)
@@ -390,6 +392,62 @@ public class CustomerApiService : ICustomerApiService
                     select AddAddressesToCustomerDto(customer, addressList.ToList());
 
         return await query.ToListAsync();
+    }
+
+    public List<List<object?>> GetItemsCompressed(IList<CustomerDto> items)
+    {
+        /**
+          [
+             id, number
+             deleted,  boolean
+             updated_on_ts,  number
+     
+             system_name,  string
+             business_name,  string
+             rif,  string
+             phone,  string
+             email,  string
+             seller_id,  number
+             billing_address_id,  number
+             addresses,  json
+          ]
+          */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.SystemName,
+                p.Attributes?["Company"],
+                p.Attributes?["Rif"],
+                p.Attributes?["Phone"],
+                p.Email,
+                p.SellerId,
+                p.BillingAddressId,
+                GetItemsCompressed(p.Addresses.ToList())
+            }
+        ).ToList();
+    }
+
+    private List<List<object?>> GetItemsCompressed(IList<AddressDto> items)
+    {
+        /**
+          [
+            id, number
+            addressDescription1,  string
+            addressDescription2,  string
+          ]
+          */
+
+        return items.Select(p =>
+            new List<object?>()
+            {
+                p.Id,
+                p.Address1,
+                p.Address2
+            }
+        ).ToList();
     }
 
 #nullable disable

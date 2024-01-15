@@ -430,7 +430,7 @@ public class ProductApiService : IProductApiService
         return (productsUpdatedSP, productsRejectedSP);
     }
 
-    public List<List<string?>> GetItemsCompressed(IList<ProductDto> products)
+    public List<List<object?>> GetItemsCompressed(IList<ProductDto> products)
     {
         /*
            [
@@ -450,19 +450,19 @@ public class ProductApiService : IProductApiService
         */
 
         return products.Select(p =>
-            new List<string?>() {
-                p.Id.ToString(),
-                p.Deleted.ToString(),
-                p.UpdatedOnTs.ToString(),
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
                 p.Name,
-                p.Price.ToString(),
+                p.Price,
                 p.Sku,
                 p.ShortDescription,
                 p.Images?.FirstOrDefault(),
-                p.IsTaxExempt.ToString(),
-                p.StockQuantity.ToString(),
-                p.Published.ToString(),
-                p.CategoryIds?.FirstOrDefault().ToString()
+                p.IsTaxExempt,
+                p.StockQuantity,
+                p.Published,
+                p.CategoryIds?.FirstOrDefault()
             }
         ).ToList();
     }

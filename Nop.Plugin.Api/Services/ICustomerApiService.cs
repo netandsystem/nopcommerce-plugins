@@ -6,6 +6,7 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
 using Nop.Plugin.Api.DTO.Customers;
+using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Infrastructure;
 
@@ -65,9 +66,11 @@ public interface ICustomerApiService
         DateTime? lastUpdateUtc
     );
 
-    Task<BaseSyncResponse<CustomerDto>> GetLastestUpdatedCustomersAsync(
+    Task<BaseSyncResponse<List<object?>>> GetLastestUpdatedCustomersAsync(
         IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
     );
 
     Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers);
+
+    List<List<object?>> GetItemsCompressed(IList<CustomerDto> items);
 }
