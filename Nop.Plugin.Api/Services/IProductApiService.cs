@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Plugin.Api.DTO.Products;
+using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Infrastructure;
 using Nop.Plugin.Api.Models;
 using static Nop.Plugin.Api.Services.ProductApiService;
@@ -57,5 +58,9 @@ public interface IProductApiService
     Task<(List<SkuPicture> productsUpdated, List<SkuPicture> productsRejected)> ImportProductsPicturesFromJsonAsync(IList<SkuPicture> skuPictureList);
 
     List<List<object?>> GetItemsCompressed(IList<ProductDto> products);
+
+    Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
+        DateTime? lastUpdateUtc
+    );
 
 }

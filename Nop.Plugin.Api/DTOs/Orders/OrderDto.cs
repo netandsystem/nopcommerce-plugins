@@ -7,6 +7,8 @@ using Nop.Core.Domain.Shipping;
 using Nop.Plugin.Api.DTO.Base;
 using Nop.Plugin.Api.DTO.OrderItems;
 using Newtonsoft.Json.Converters;
+using Nop.Plugin.Api.DTO.Customers;
+using Nop.Plugin.Api.Helpers;
 
 namespace Nop.Plugin.Api.DTO.Orders;
 
@@ -109,6 +111,9 @@ public class OrderDto : BaseSyncDto
     [JsonProperty("customer_id")]
     public int? CustomerId { get; set; }
 
+    [JsonProperty("customer")]
+    public CustomerDto Customer { get; set; }
+
     /// <summary>
     ///     Gets or sets the billing address
     /// </summary>
@@ -163,6 +168,19 @@ public class OrderDto : BaseSyncDto
     [JsonProperty("shipping_status")]
     [JsonConverter(typeof(StringEnumConverter))]
     public ShippingStatus? ShippingStatus { get; set; }
+
+    /// <summary>
+    /// Gets or sets the paid date and time
+    /// </summary>
+    [JsonProperty("paid_date_utc")]
+    public DateTime? PaidDateUtc { get; set; }
+
+
+    /// <summary>
+    ///    Gets or sets the date and time of instance update
+    ///    </summary>
+    [JsonProperty("paid_date_ts")]
+    public long? PaidDateTs { get => PaidDateUtc == null ? null : DTOHelper.DateTimeToTimestamp((DateTime)PaidDateUtc); }
 }
 
 

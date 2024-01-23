@@ -37,6 +37,8 @@ using MailKit.Search;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using static Nop.Services.ExportImport.ImportManager;
 using Newtonsoft.Json;
+using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.Models.Base;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -373,29 +375,23 @@ public class ProductsController : BaseApiController
     }
 
 
-    [HttpGet("syncdata2", Name = "SyncProducts2")]
+    [HttpPost("syncdata2", Name = "SyncProducts2")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
-    [ProducesResponseType(typeof(List<List<string?>>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
-    public async Task<IActionResult> SyncData2(long? lastUpdateTs)
+    public async Task<IActionResult> SyncData2(Sync2ParametersModel body)
     {
         DateTime? lastUpdateUtc = null;
 
-        if (lastUpdateTs.HasValue)
+        if (body.LastUpdateTs.HasValue)
         {
-            lastUpdateUtc = DTOHelper.TimestampToDateTime(lastUpdateTs.Value);
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
         }
 
-        var products = await _productApiService.GetLastestUpdatedProducts(lastUpdateUtc);
+        var result = await _productApiService.GetLastestUpdatedItems2Async(lastUpdateUtc);
 
-        var result = await _productApiService.JoinProductsAndPicturesAsync(products);
-
-        result = await _productApiService.JoinProductsAndCategoriesAsync(result);
-
-        var compressed = _productApiService.GetItemsCompressed(result);
-
-        return Ok(compressed);
+        return Ok(result);
     }
 
     [HttpPost("picture", Name = "ImportProductsPicturesFromJsonAsync")]

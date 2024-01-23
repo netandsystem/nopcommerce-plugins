@@ -22,14 +22,14 @@ public interface ICustomerApiService
 
     Task<Customer> GetCustomerEntityByIdAsync(int id);
 
-    Task<IList<CustomerDto>> GetCustomersDtosAsync(
-        DateTime? createdAtMin = null, DateTime? createdAtMax = null,
-        int limit = Constants.Configurations.DefaultLimit, int page = Constants.Configurations.DefaultPageValue,
-        int sinceId = Constants.Configurations.DefaultSinceId);
+    //Task<IList<CustomerDto>> GetCustomersDtosAsync(
+    //    DateTime? createdAtMin = null, DateTime? createdAtMax = null,
+    //    int limit = Constants.Configurations.DefaultLimit, int page = Constants.Configurations.DefaultPageValue,
+    //    int sinceId = Constants.Configurations.DefaultSinceId);
 
-    Task<IList<CustomerDto>> SearchAsync(
-        string query = "", string order = Constants.Configurations.DefaultOrder,
-        int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit);
+    //Task<IList<CustomerDto>> SearchAsync(
+    //    string query = "", string order = Constants.Configurations.DefaultOrder,
+    //    int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit);
 
     Task<Dictionary<string, string>> GetFirstAndLastNameByCustomerIdAsync(int customerId);
 
@@ -66,7 +66,7 @@ public interface ICustomerApiService
         DateTime? lastUpdateUtc
     );
 
-    Task<BaseSyncResponse<List<object?>>> GetLastestUpdatedCustomersAsync(
+    Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
         IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
     );
 

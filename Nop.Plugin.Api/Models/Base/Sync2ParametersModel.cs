@@ -11,19 +11,15 @@ namespace Nop.Plugin.Api.Models.Base;
 
 public class Sync2ParametersModel
 {
-    public Sync2ParametersModel(List<int> ids, long? lastUpdateTs, string? fields)
+    public Sync2ParametersModel(List<int> idsInDb, long? lastUpdateTs)
     {
-        Ids = ids;
+        IdsInDb = idsInDb;
         LastUpdateTs = lastUpdateTs;
-        Fields = fields;
     }
 
-    [JsonProperty("ids", Required = Required.Always)]
-    public List<int> Ids { get; set; }
+    [JsonProperty("ids_in_db", Required = Required.AllowNull)]
+    public List<int> IdsInDb { get; set; }
 
     [JsonProperty("last_update_ts", Required = Required.AllowNull)]
     public long? LastUpdateTs { get; set; }
-
-    [JsonProperty("fields", Required = Required.AllowNull)]
-    public string? Fields { get; set; }
 }

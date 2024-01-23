@@ -24,12 +24,6 @@ public class CustomerDto : BaseSyncDto
     [JsonProperty("system_name")]
     public string SystemName { get; set; } = string.Empty;
 
-    [JsonProperty("first_name", Required = Required.Always)]
-    public string FirstName { get; set; } = string.Empty;
-
-    [JsonProperty("last_name", Required = Required.Always)]
-    public string LastName { get; set; } = string.Empty;
-
     /// <summary>
     /// Gets or sets the billing address identifier
     /// </summary>
@@ -78,21 +72,6 @@ public class CustomerDto : BaseSyncDto
     }
 
     /// <summary>
-    /// get or set the custom attributes
-    /// </summary>
-    //[JsonProperty("custom_customer_attributes")]
-    //public string CustomCustomerAttributes { get; set; }
-
-    [JsonProperty("identity_card")]
-    public string? IdentityCard { get; set; } = null;
-
-    /// <summary>
-    /// get or set the custom attributes
-    /// </summary>
-    [JsonProperty("phone")]
-    public string? Phone { get; set; } = null;
-
-    /// <summary>
     /// Gets or sets the email
     /// </summary>
     [JsonProperty("email")]
@@ -103,8 +82,6 @@ public class CustomerDto : BaseSyncDto
     /// </summary>
     [JsonProperty("seller_id")]
     public int? SellerId { get; set; }
-
-
 
     #endregion
 }

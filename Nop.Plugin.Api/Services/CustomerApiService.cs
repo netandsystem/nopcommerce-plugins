@@ -109,24 +109,24 @@ public class CustomerApiService : ICustomerApiService
 
     #region Methods
 
-    public async Task<IList<CustomerDto>> GetCustomersDtosAsync(
-        DateTime? createdAtMin = null, DateTime? createdAtMax = null, int limit = Constants.Configurations.DefaultLimit,
-        int page = Constants.Configurations.DefaultPageValue, int sinceId = Constants.Configurations.DefaultSinceId)
-    {
-        var query = GetCustomersQuery(createdAtMin, createdAtMax, sinceId);
+    //public async Task<IList<CustomerDto>> GetCustomersDtosAsync(
+    //    DateTime? createdAtMin = null, DateTime? createdAtMax = null, int limit = Constants.Configurations.DefaultLimit,
+    //    int page = Constants.Configurations.DefaultPageValue, int sinceId = Constants.Configurations.DefaultSinceId)
+    //{
+    //    var query = GetCustomersQuery(createdAtMin, createdAtMax, sinceId);
 
-        var result = await HandleCustomerGenericAttributesAsync(null, query, limit, page);
+    //    var result = await HandleCustomerGenericAttributesAsync(null, query, limit, page);
 
 
-        foreach (CustomerDto customerDto in result)
-        {
-            var customer = await query.Where(x => x.Id == customerDto.Id).FirstOrDefaultAsync();
+    //    foreach (CustomerDto customerDto in result)
+    //    {
+    //        var customer = await query.Where(x => x.Id == customerDto.Id).FirstOrDefaultAsync();
 
-            await SetCustomerAddressesAsync(customer, customerDto);
-        }
+    //        await SetCustomerAddressesAsync(customer, customerDto);
+    //    }
 
-        return result;
-    }
+    //    return result;
+    //}
 
     public Task<int> GetCustomersCountAsync()
     {
@@ -136,45 +136,45 @@ public class CustomerApiService : ICustomerApiService
     }
 
     // Need to work with dto object so we can map the first and last name from generic attributes table.
-    public async Task<IList<CustomerDto>> SearchAsync(
-        string queryParams = "", string order = Constants.Configurations.DefaultOrder,
-        int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit)
-    {
-        IList<CustomerDto> result = new List<CustomerDto>();
+    //public async Task<IList<CustomerDto>> SearchAsync(
+    //    string queryParams = "", string order = Constants.Configurations.DefaultOrder,
+    //    int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit)
+    //{
+    //    IList<CustomerDto> result = new List<CustomerDto>();
 
-        var searchParams = EnsureSearchQueryIsValid(queryParams, ParseSearchQuery);
+    //    var searchParams = EnsureSearchQueryIsValid(queryParams, ParseSearchQuery);
 
-        if (searchParams != null)
-        {
-            var query = _customerRepository.Table.Where(customer => !customer.Deleted);
+    //    if (searchParams != null)
+    //    {
+    //        var query = _customerRepository.Table.Where(customer => !customer.Deleted);
 
-            foreach (var searchParam in searchParams)
-            {
-                // Skip non existing properties.
-                if (ReflectionHelper.HasProperty(searchParam.Key, typeof(Customer)))
-                {
-                    // @0 is a placeholder used by dynamic linq and it is used to prevent possible sql injections.
-                    query = query.Where(string.Format("{0} = @0 || {0}.Contains(@0)", searchParam.Key), searchParam.Value);
-                }
-                // The code bellow will search in customer addresses as well.
-                //else if (HasProperty(searchParam.Key, typeof(Address)))
-                //{
-                //    query = query.Where(string.Format("Addresses.Where({0} == @0).Any()", searchParam.Key), searchParam.Value);
-                //}
-            }
+    //        foreach (var searchParam in searchParams)
+    //        {
+    //            // Skip non existing properties.
+    //            if (ReflectionHelper.HasProperty(searchParam.Key, typeof(Customer)))
+    //            {
+    //                // @0 is a placeholder used by dynamic linq and it is used to prevent possible sql injections.
+    //                query = query.Where(string.Format("{0} = @0 || {0}.Contains(@0)", searchParam.Key), searchParam.Value);
+    //            }
+    //            // The code bellow will search in customer addresses as well.
+    //            //else if (HasProperty(searchParam.Key, typeof(Address)))
+    //            //{
+    //            //    query = query.Where(string.Format("Addresses.Where({0} == @0).Any()", searchParam.Key), searchParam.Value);
+    //            //}
+    //        }
 
-            result = await HandleCustomerGenericAttributesAsync(searchParams, query, limit, page, order);
+    //        result = await HandleCustomerGenericAttributesAsync(searchParams, query, limit, page, order);
 
-            foreach (CustomerDto customerDto in result)
-            {
-                var customer = await query.Where(x => x.Id == customerDto.Id).FirstOrDefaultAsync();
+    //        foreach (CustomerDto customerDto in result)
+    //        {
+    //            var customer = await query.Where(x => x.Id == customerDto.Id).FirstOrDefaultAsync();
 
-                await SetCustomerAddressesAsync(customer, customerDto);
-            }
-        }
+    //            await SetCustomerAddressesAsync(customer, customerDto);
+    //        }
+    //    }
 
-        return result;
-    }
+    //    return result;
+    //}
 
     public Task<Dictionary<string, string>> GetFirstAndLastNameByCustomerIdAsync(int customerId)
     {
@@ -242,6 +242,8 @@ public class CustomerApiService : ICustomerApiService
                 customerAttributeMappings.Add(customerAttributeMappingDto);
             }
 
+            customerDto.Attributes = new Dictionary<string, string>();
+
             foreach (var mapping in customerAttributeMappings)
             {
                 if (!showDeleted && mapping.Customer.Deleted)
@@ -251,22 +253,7 @@ public class CustomerApiService : ICustomerApiService
 
                 if (mapping.Attribute != null)
                 {
-                    if (mapping.Attribute.Key.Equals(FIRST_NAME, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        customerDto.FirstName = mapping.Attribute.Value;
-                    }
-                    else if (mapping.Attribute.Key.Equals(LAST_NAME, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        customerDto.LastName = mapping.Attribute.Value;
-                    }
-                    else if (mapping.Attribute.Key.Equals("Cedula", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        customerDto.IdentityCard = mapping.Attribute.Value;
-                    }
-                    else if (mapping.Attribute.Key.Equals(PHONE, StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        customerDto.Phone = mapping.Attribute.Value;
-                    }
+                    customerDto.Attributes.Add(mapping.Attribute.Key, mapping.Attribute.Value);
                 }
             }
         }
@@ -356,7 +343,7 @@ public class CustomerApiService : ICustomerApiService
         return customersDto;
     }
 
-    public async Task<BaseSyncResponse<List<object?>>> GetLastestUpdatedCustomersAsync(
+    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
         IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
     )
     {
@@ -378,7 +365,7 @@ public class CustomerApiService : ICustomerApiService
         var customerToSave = GetItemsCompressed(customersToInsert.Concat(customersToUpdate).ToList());
         var customersIdsToDelete = customersToDelete.Select(x => x.Id).ToList();
 
-        return new BaseSyncResponse<List<object?>>(customerToSave, customersIdsToDelete);
+        return new BaseSyncResponse(customerToSave, customersIdsToDelete);
     }
 
     public async Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers)
@@ -511,157 +498,157 @@ public class CustomerApiService : ICustomerApiService
     /// <param name="page"></param>
     /// <param name="order"></param>
     /// <returns></returns>
-    private async Task<IList<CustomerDto>> HandleCustomerGenericAttributesAsync(
-        IReadOnlyDictionary<string, string> searchParams, IQueryable<Customer> query,
-        int limit = Constants.Configurations.DefaultLimit, int page = Constants.Configurations.DefaultPageValue,
-        string order = Constants.Configurations.DefaultOrder)
-    {
-        // Here we join the GenericAttribute records with the customers and making sure that we are working only with the attributes
-        // that are in the customers keyGroup and their keys are either first or last name.
-        // We are returning a collection with customer record and attribute record. 
-        // It will look something like:
-        // customer data for customer 1
-        //      attribute that contains the first name of customer 1
-        //      attribute that contains the last name of customer 1
-        // customer data for customer 2, 
-        //      attribute that contains the first name of customer 2
-        //      attribute that contains the last name of customer 2
-        // etc.
+    //private async Task<IList<CustomerDto>> HandleCustomerGenericAttributesAsync(
+    //    IReadOnlyDictionary<string, string> searchParams, IQueryable<Customer> query,
+    //    int limit = Constants.Configurations.DefaultLimit, int page = Constants.Configurations.DefaultPageValue,
+    //    string order = Constants.Configurations.DefaultOrder)
+    //{
+    //    // Here we join the GenericAttribute records with the customers and making sure that we are working only with the attributes
+    //    // that are in the customers keyGroup and their keys are either first or last name.
+    //    // We are returning a collection with customer record and attribute record. 
+    //    // It will look something like:
+    //    // customer data for customer 1
+    //    //      attribute that contains the first name of customer 1
+    //    //      attribute that contains the last name of customer 1
+    //    // customer data for customer 2, 
+    //    //      attribute that contains the first name of customer 2
+    //    //      attribute that contains the last name of customer 2
+    //    // etc.
 
-        var allRecords =
-             from customer in query
-             from attribute in _genericAttributeRepository.Table
-                                                          .Where(attr => attr.EntityId == customer.Id &&
-                                                                         attr.KeyGroup == nameof(Customer)).DefaultIfEmpty()
-             select new CustomerAttributeMappingDto
-             {
-                 Attribute = attribute,
-                 Customer = customer
-             };
+    //    var allRecords =
+    //         from customer in query
+    //         from attribute in _genericAttributeRepository.Table
+    //                                                      .Where(attr => attr.EntityId == customer.Id &&
+    //                                                                     attr.KeyGroup == nameof(Customer)).DefaultIfEmpty()
+    //         select new CustomerAttributeMappingDto
+    //         {
+    //             Attribute = attribute,
+    //             Customer = customer
+    //         };
 
-        if (searchParams != null && searchParams.Count > 0)
-        {
-            if (searchParams.ContainsKey(FIRST_NAME))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, FIRST_NAME, searchParams[FIRST_NAME]);
-            }
+    //    if (searchParams != null && searchParams.Count > 0)
+    //    {
+    //        if (searchParams.ContainsKey(FIRST_NAME))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, FIRST_NAME, searchParams[FIRST_NAME]);
+    //        }
 
-            if (searchParams.ContainsKey(LAST_NAME))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, LAST_NAME, searchParams[LAST_NAME]);
-            }
+    //        if (searchParams.ContainsKey(LAST_NAME))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, LAST_NAME, searchParams[LAST_NAME]);
+    //        }
 
-            if (searchParams.ContainsKey(LANGUAGE_ID))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, LANGUAGE_ID, searchParams[LANGUAGE_ID]);
-            }
+    //        if (searchParams.ContainsKey(LANGUAGE_ID))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, LANGUAGE_ID, searchParams[LANGUAGE_ID]);
+    //        }
 
-            if (searchParams.ContainsKey(DATE_OF_BIRTH))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, DATE_OF_BIRTH, searchParams[DATE_OF_BIRTH]);
-            }
+    //        if (searchParams.ContainsKey(DATE_OF_BIRTH))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, DATE_OF_BIRTH, searchParams[DATE_OF_BIRTH]);
+    //        }
 
-            if (searchParams.ContainsKey(GENDER))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, GENDER, searchParams[GENDER]);
-            }
-            if (searchParams.ContainsKey(VAT_NUMBER))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, VAT_NUMBER, searchParams[VAT_NUMBER]);
-            }
-            if (searchParams.ContainsKey(VAT_NUMBER_STATUS_ID))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, VAT_NUMBER_STATUS_ID, searchParams[VAT_NUMBER_STATUS_ID]);
-            }
-            if (searchParams.ContainsKey(EU_COOKIE_LAW_ACCEPTED))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, EU_COOKIE_LAW_ACCEPTED, searchParams[EU_COOKIE_LAW_ACCEPTED]);
-            }
-            if (searchParams.ContainsKey(COMPANY))
-            {
-                allRecords = GetCustomerAttributesMappingsByKey(allRecords, COMPANY, searchParams[COMPANY]);
-            }
-        }
+    //        if (searchParams.ContainsKey(GENDER))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, GENDER, searchParams[GENDER]);
+    //        }
+    //        if (searchParams.ContainsKey(VAT_NUMBER))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, VAT_NUMBER, searchParams[VAT_NUMBER]);
+    //        }
+    //        if (searchParams.ContainsKey(VAT_NUMBER_STATUS_ID))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, VAT_NUMBER_STATUS_ID, searchParams[VAT_NUMBER_STATUS_ID]);
+    //        }
+    //        if (searchParams.ContainsKey(EU_COOKIE_LAW_ACCEPTED))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, EU_COOKIE_LAW_ACCEPTED, searchParams[EU_COOKIE_LAW_ACCEPTED]);
+    //        }
+    //        if (searchParams.ContainsKey(COMPANY))
+    //        {
+    //            allRecords = GetCustomerAttributesMappingsByKey(allRecords, COMPANY, searchParams[COMPANY]);
+    //        }
+    //    }
 
-        var allRecordsGroupedByCustomerId = allRecords
-            .AsEnumerable<CustomerAttributeMappingDto>() // convert to IEnumerable (materialize the query) as LinqToDb does not support GroupBy
-            .GroupBy(x => x.Customer.Id) // do grouping in memory on materialized sequence
-            .AsQueryable(); // convert back to queryable just to be accepted by a following method
+    //    var allRecordsGroupedByCustomerId = allRecords
+    //        .AsEnumerable<CustomerAttributeMappingDto>() // convert to IEnumerable (materialize the query) as LinqToDb does not support GroupBy
+    //        .GroupBy(x => x.Customer.Id) // do grouping in memory on materialized sequence
+    //        .AsQueryable(); // convert back to queryable just to be accepted by a following method
 
-        var result = await GetFullCustomerDtosAsync(allRecordsGroupedByCustomerId, page, limit, order);
+    //    var result = await GetFullCustomerDtosAsync(allRecordsGroupedByCustomerId, page, limit, order);
 
-        return result;
-    }
+    //    return result;
+    //}
 
     /// <summary>
     ///     This method is responsible for getting customer dto records with first and last names set from the attribute
     ///     mappings.
     /// </summary>
-    private async Task<IList<CustomerDto>> GetFullCustomerDtosAsync(
-        IQueryable<IGrouping<int, CustomerAttributeMappingDto>> customerAttributesMappings,
-        int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit,
-        string order = Constants.Configurations.DefaultOrder)
-    {
-        var customerDtos = new List<CustomerDto>();
+    //private async Task<IList<CustomerDto>> GetFullCustomerDtosAsync(
+    //    IQueryable<IGrouping<int, CustomerAttributeMappingDto>> customerAttributesMappings,
+    //    int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit,
+    //    string order = Constants.Configurations.DefaultOrder)
+    //{
+    //    var customerDtos = new List<CustomerDto>();
 
-        customerAttributesMappings = customerAttributesMappings.OrderBy(x => x.Key);
+    //    customerAttributesMappings = customerAttributesMappings.OrderBy(x => x.Key);
 
-        IList<IGrouping<int, CustomerAttributeMappingDto>> customerAttributeGroupsList =
-            new ApiList<IGrouping<int, CustomerAttributeMappingDto>>(customerAttributesMappings, page - 1, limit);
+    //    IList<IGrouping<int, CustomerAttributeMappingDto>> customerAttributeGroupsList =
+    //        new ApiList<IGrouping<int, CustomerAttributeMappingDto>>(customerAttributesMappings, page - 1, limit);
 
-        // Get the default language id for the current store.
-        var defaultLanguageId = await GetDefaultStoreLangaugeIdAsync();
+    //    // Get the default language id for the current store.
+    //    var defaultLanguageId = await GetDefaultStoreLangaugeIdAsync();
 
-        foreach (var group in customerAttributeGroupsList)
-        {
-            IList<CustomerAttributeMappingDto> mappingsForMerge = group.Select(x => x).ToList();
+    //    foreach (var group in customerAttributeGroupsList)
+    //    {
+    //        IList<CustomerAttributeMappingDto> mappingsForMerge = group.Select(x => x).ToList();
 
-            var customerDto = Merge(mappingsForMerge, defaultLanguageId);
+    //        var customerDto = Merge(mappingsForMerge, defaultLanguageId);
 
-            customerDtos.Add(customerDto);
-        }
+    //        customerDtos.Add(customerDto);
+    //    }
 
-        // Needed so we can apply the order parameter
-        return customerDtos.AsQueryable().OrderBy(order).ToList();
-    }
+    //    // Needed so we can apply the order parameter
+    //    return customerDtos.AsQueryable().OrderBy(order).ToList();
+    //}
 
-    private static CustomerDto Merge(IList<CustomerAttributeMappingDto> mappingsForMerge, int defaultLanguageId)
-    {
-        // We expect the customer to be always set.
-        var customerDto = mappingsForMerge.First().Customer.ToDto();
+    //private static CustomerDto Merge(IList<CustomerAttributeMappingDto> mappingsForMerge, int defaultLanguageId)
+    //{
+    //    // We expect the customer to be always set.
+    //    var customerDto = mappingsForMerge.First().Customer.ToDto();
 
-        var attributes = mappingsForMerge.Select(x => x.Attribute).ToList();
+    //    var attributes = mappingsForMerge.Select(x => x.Attribute).ToList();
 
-        // If there is no Language Id generic attribute create one with the default language id.
-        if (!attributes.Any(atr => atr != null && atr.Key.Equals(LANGUAGE_ID, StringComparison.InvariantCultureIgnoreCase)))
-        {
-            var languageId = new GenericAttribute
-            {
-                Key = LANGUAGE_ID,
-                Value = defaultLanguageId.ToString()
-            };
+    //    // If there is no Language Id generic attribute create one with the default language id.
+    //    if (!attributes.Any(atr => atr != null && atr.Key.Equals(LANGUAGE_ID, StringComparison.InvariantCultureIgnoreCase)))
+    //    {
+    //        var languageId = new GenericAttribute
+    //        {
+    //            Key = LANGUAGE_ID,
+    //            Value = defaultLanguageId.ToString()
+    //        };
 
-            attributes.Add(languageId);
-        }
+    //        attributes.Add(languageId);
+    //    }
 
-        foreach (var attribute in attributes)
-        {
-            if (attribute != null)
-            {
-                if (attribute.Key.Equals(FIRST_NAME, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    customerDto.FirstName = attribute.Value;
-                }
-                else if (attribute.Key.Equals(LAST_NAME, StringComparison.InvariantCultureIgnoreCase))
-                {
-                    customerDto.LastName = attribute.Value;
-                }
+    //    foreach (var attribute in attributes)
+    //    {
+    //        if (attribute != null)
+    //        {
+    //            if (attribute.Key.Equals(FIRST_NAME, StringComparison.InvariantCultureIgnoreCase))
+    //            {
+    //                customerDto.FirstName = attribute.Value;
+    //            }
+    //            else if (attribute.Key.Equals(LAST_NAME, StringComparison.InvariantCultureIgnoreCase))
+    //            {
+    //                customerDto.LastName = attribute.Value;
+    //            }
 
-            }
-        }
+    //        }
+    //    }
 
-        return customerDto;
-    }
+    //    return customerDto;
+    //}
 
     private IQueryable<CustomerAttributeMappingDto> GetCustomerAttributesMappingsByKey(
         IQueryable<CustomerAttributeMappingDto> customerAttributes, string key, string value)

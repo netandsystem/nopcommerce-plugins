@@ -27,6 +27,7 @@ using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.MappingExtensions;
 using Nop.Services.ExportImport;
 using static Nop.Services.ExportImport.ImportManager;
+using Nop.Plugin.Api.DTOs.Base;
 
 
 namespace Nop.Plugin.Api.Services;
@@ -382,6 +383,22 @@ public class ProductApiService : IProductApiService
         return await query.ToListAsync();
     }
 
+    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
+        DateTime? lastUpdateUtc
+    )
+    {
+        var products = await GetLastestUpdatedProducts(lastUpdateUtc);
+
+        var productsWithPictures = await JoinProductsAndPicturesAsync(products);
+
+        var productsWithPicturesAndCategories = await JoinProductsAndCategoriesAsync(productsWithPictures);
+
+        var productsCompressed = GetItemsCompressed(productsWithPicturesAndCategories);
+
+        return new BaseSyncResponse(productsCompressed, new List<int>());
+    }
+
+
     private ProductDto JoinProductWithCategoryIds(ProductDto productDto, List<int> categoryIds)
     {
         productDto.CategoryIds = categoryIds;
@@ -437,6 +454,7 @@ public class ProductApiService : IProductApiService
              id,
              deleted,
              updated_on_ts,
+
              name,
              price,
              sku,

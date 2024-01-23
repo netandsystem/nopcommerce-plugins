@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Nop.Services.Catalog;
 using Nop.Plugin.Api.DTO.Categories;
 using Nop.Plugin.Api.MappingExtensions;
+using Nop.Plugin.Api.DTOs.Base;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -149,6 +150,15 @@ public class CategoryApiService : ICategoryApiService
                     select item.ToDto();
 
         return await query.ToListAsync();
+    }
+
+    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc)
+    {
+        var itemsDto = await GetLastestUpdatedCategoriesAsync(lastUpdateUtc);
+
+        var itemsCompressed = GetItemsCompressed(itemsDto);
+
+        return new BaseSyncResponse(itemsCompressed);
     }
 
     public List<List<object?>> GetItemsCompressed(IList<CategoryDto> items)
