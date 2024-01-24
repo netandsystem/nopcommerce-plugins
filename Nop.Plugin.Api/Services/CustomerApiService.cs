@@ -344,14 +344,30 @@ public class CustomerApiService : ICustomerApiService
     }
 
     public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
-        IList<int>? customersIds, DateTime? lastUpdateUtc, int SellerId
+        IList<int>? idsInDb, DateTime? lastUpdateUtc, int SellerId
     )
     {
-        IList<int> _customersIds = customersIds ?? new List<int>();
+        /*  
+            d = item in db
+            s = item belongs to seller
+            u = item updated after lastUpdateUtc
 
-        var customersDto = await GetLastestUpdatedCustomersAsync(lastUpdateUtc);
+            !ds + d!s + du
+         
+         */
+        IList<int> _idsInDb = idsInDb ?? new List<int>();
 
-        var customersToInsertOrUpdate = customersDto.Where(x => _customersIds.Contains(x.Id) || x.SellerId == SellerId).ToList();
+        var allCustomers = await GetLastestUpdatedCustomersAsync(null);
+
+        var customersToInsertOrUpdate = allCustomers.Where(x =>
+        {
+            var d = _idsInDb.Contains(x.Id);
+            var s = x.SellerId == SellerId;
+            var u = x.UpdatedOnUtc > lastUpdateUtc;
+
+            return !d && s || d && !s || d && u;
+        }).ToList();
+
         customersToInsertOrUpdate = await JoinCustomerDtosWithCustomerAttributesAsync(customersToInsertOrUpdate);
 
         var customerToSave = GetItemsCompressed(customersToInsertOrUpdate);
