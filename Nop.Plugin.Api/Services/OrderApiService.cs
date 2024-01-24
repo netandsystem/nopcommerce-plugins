@@ -447,8 +447,8 @@ public class OrderApiService : IOrderApiService
 
                 p.CustomerId,
                 p.Customer?.SystemName,
-                p.Customer?.Attributes?.GetValueOrDefault("Company"),
-                p.Customer?.Attributes?.GetValueOrDefault("Rif"),
+                p.Customer?.Attributes?.GetValueOrDefault("company"),
+                p.Customer?.Attributes?.GetValueOrDefault("rif"),
 
 
                 p.BillingAddress.Address1,

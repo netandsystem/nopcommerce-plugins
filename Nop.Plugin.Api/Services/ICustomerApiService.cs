@@ -67,7 +67,7 @@ public interface ICustomerApiService
     );
 
     Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
-        IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
+        IList<int>? customersIds, DateTime? lastUpdateUtc, int SellerId
     );
 
     Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers);

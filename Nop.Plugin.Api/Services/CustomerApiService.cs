@@ -344,9 +344,11 @@ public class CustomerApiService : ICustomerApiService
     }
 
     public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
-        IList<int> customersIds, DateTime? lastUpdateUtc, int SellerId
+        IList<int>? customersIds, DateTime? lastUpdateUtc, int SellerId
     )
     {
+        IList<int> _customersIds = customersIds ?? new List<int>();
+
         var customersDto = await GetLastestUpdatedCustomersAsync(lastUpdateUtc);
 
         var customersThatBelogToSeller = customersDto.Where(x => x.SellerId == SellerId).ToList();
@@ -358,9 +360,9 @@ public class CustomerApiService : ICustomerApiService
         List<CustomerDto> customersToUpdate = new();
         List<CustomerDto> customersToDelete = new();
 
-        customersToInsert = customersThatBelogToSeller.Where(x => !customersIds.Contains(x.Id)).ToList();
-        customersToUpdate = customersThatBelogToSeller.Where(x => customersIds.Contains(x.Id)).ToList();
-        customersToDelete = customersThatNotBelogToSeller.Where(x => customersIds.Contains(x.Id)).ToList();
+        customersToInsert = customersThatBelogToSeller.Where(x => !_customersIds.Contains(x.Id)).ToList();
+        customersToUpdate = customersThatBelogToSeller.Where(x => _customersIds.Contains(x.Id)).ToList();
+        customersToDelete = customersThatNotBelogToSeller.Where(x => _customersIds.Contains(x.Id)).ToList();
 
         var customerToSave = GetItemsCompressed(customersToInsert.Concat(customersToUpdate).ToList());
         var customersIdsToDelete = customersToDelete.Select(x => x.Id).ToList();
@@ -406,9 +408,9 @@ public class CustomerApiService : ICustomerApiService
                 p.Deleted,
                 p.UpdatedOnTs,
                 p.SystemName,
-                p.Attributes?.GetValueOrDefault("Company"),
-                p.Attributes?.GetValueOrDefault("Rif"),
-                p.Attributes?.GetValueOrDefault("Phone"),
+                p.Attributes?.GetValueOrDefault("company"),
+                p.Attributes?.GetValueOrDefault("rif"),
+                p.Attributes?.GetValueOrDefault("phone"),
                 p.Email,
                 p.SellerId,
                 p.BillingAddressId,
