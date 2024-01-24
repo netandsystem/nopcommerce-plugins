@@ -351,23 +351,12 @@ public class CustomerApiService : ICustomerApiService
 
         var customersDto = await GetLastestUpdatedCustomersAsync(lastUpdateUtc);
 
-        var customersThatBelogToSeller = customersDto.Where(x => x.SellerId == SellerId).ToList();
-        customersThatBelogToSeller = await JoinCustomerDtosWithCustomerAttributesAsync(customersThatBelogToSeller);
+        var customersToInsertOrUpdate = customersDto.Where(x => _customersIds.Contains(x.Id) || x.SellerId == SellerId).ToList();
+        customersToInsertOrUpdate = await JoinCustomerDtosWithCustomerAttributesAsync(customersToInsertOrUpdate);
 
-        var customersThatNotBelogToSeller = customersDto.Where(x => x.SellerId != SellerId).ToList();
+        var customerToSave = GetItemsCompressed(customersToInsertOrUpdate);
 
-        List<CustomerDto> customersToInsert = new();
-        List<CustomerDto> customersToUpdate = new();
-        List<CustomerDto> customersToDelete = new();
-
-        customersToInsert = customersThatBelogToSeller.Where(x => !_customersIds.Contains(x.Id)).ToList();
-        customersToUpdate = customersThatBelogToSeller.Where(x => _customersIds.Contains(x.Id)).ToList();
-        customersToDelete = customersThatNotBelogToSeller.Where(x => _customersIds.Contains(x.Id)).ToList();
-
-        var customerToSave = GetItemsCompressed(customersToInsert.Concat(customersToUpdate).ToList());
-        var customersIdsToDelete = customersToDelete.Select(x => x.Id).ToList();
-
-        return new BaseSyncResponse(customerToSave, customersIdsToDelete);
+        return new BaseSyncResponse(customerToSave);
     }
 
     public async Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers)
