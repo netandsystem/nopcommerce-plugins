@@ -30,7 +30,9 @@ using Microsoft.AspNetCore.Routing;
 namespace Nop.Plugin.Api.Infrastructure;
 
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.ResponseCompression;
 using Newtonsoft.Json.Converters;
+using System.IO.Compression;
 
 //class DeltaSchemaFilter : ISchemaFilter
 //{
@@ -63,6 +65,24 @@ public class ApiStartup : INopStartup
     {
 
         var apiConfigSection = configuration.GetSection("Api");
+
+        services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
+
+        services.Configure<BrotliCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Optimal;
+        });
+
+        services.Configure<GzipCompressionProviderOptions>(options =>
+        {
+            options.Level = CompressionLevel.Optimal;
+        });
+
 
         if (apiConfigSection != null)
         {
@@ -148,6 +168,8 @@ public class ApiStartup : INopStartup
 
     public void Configure(IApplicationBuilder app)
     {
+        app.UseResponseCompression();
+
         var environment = app.ApplicationServices.GetRequiredService<IWebHostEnvironment>();
 
         app.UseCors(x => x

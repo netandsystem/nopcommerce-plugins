@@ -26,6 +26,8 @@ using Nop.Core;
 using Nop.Services.Localization;
 using DocumentFormat.OpenXml.Spreadsheet;
 using DocumentFormat.OpenXml.Wordprocessing;
+using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.DTO.OrderItems;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -46,6 +48,7 @@ public class OrderApiService : IOrderApiService
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly IShippingService _shippingService;
     private readonly ICustomerService _customerService;
+    private readonly ICustomerApiService _customerApiService;
     private readonly ShippingSettings _shippingSettings;
     private readonly ILocalizationService _localizationService;
 
@@ -65,6 +68,7 @@ public class OrderApiService : IOrderApiService
         IShippingService shippingService,
         ICustomerService customerService,
         ShippingSettings shippingSettings,
+        ICustomerApiService customerApiService,
         ILocalizationService localizationService,
         IRepository<Customer> customerRepository
     )
@@ -80,6 +84,7 @@ public class OrderApiService : IOrderApiService
         _shippingService = shippingService;
         _customerService = customerService;
         _shippingSettings = shippingSettings;
+        _customerApiService = customerApiService;
         _localizationService = localizationService;
         _customerRepository = customerRepository;
     }
@@ -125,7 +130,7 @@ public class OrderApiService : IOrderApiService
                               join orderItem in _orderItemRepository.Table
                               on order.Id equals orderItem.OrderId
                               into orderItemsGroup
-                              select order.ToDto(orderItemsGroup.ToList(), address, _paymentService.DeserializeCustomValues(order));
+                              select order.ToDto(orderItemsGroup.ToList(), address, _paymentService.DeserializeCustomValues(order), null);
 
         var apiList = new ApiList<OrderDto>(ordersItemQuery, pageValue - 1, limitValue);
 
@@ -211,9 +216,9 @@ public class OrderApiService : IOrderApiService
             }
 
             //set value indicating that "pick up in store" option has not been chosen
-            #nullable disable
+#nullable disable
             await _genericAttributeService.SaveAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, null, storeId);
-            #nullable enable
+#nullable enable
 
             //find shipping method
             //performance optimization. try cache first
@@ -282,7 +287,7 @@ public class OrderApiService : IOrderApiService
                 page: null,
                 status: null,
                 paymentStatus: null,
-                shippingStatus:     null,
+                shippingStatus: null,
                 storeId: storeId,
                 orderByDateDesc: false,
                 createdAtMin: null,
@@ -290,6 +295,187 @@ public class OrderApiService : IOrderApiService
                 sellerId: sellerId,
                 lastUpdateUtc: lastUpdateUtc
             );
+    }
+
+
+    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId)
+    {
+        // get date 4 months ago
+        var createdAtMin = DateTime.UtcNow.AddMonths(-4);
+
+        var items = await GetOrders2(
+                customerId: null,
+                status: null,
+                paymentStatus: null,
+                shippingStatus: null,
+                storeId: storeId,
+                orderByDateDesc: false,
+                createdAtMin: createdAtMin,
+                createdAtMax: null,
+                sellerId: sellerId,
+                lastUpdateUtc: lastUpdateUtc
+            );
+
+        var itemsCompressed = GetItemsCompressed(items);
+
+        return new BaseSyncResponse(itemsCompressed);
+    }
+
+
+    public async Task<List<OrderDto>> GetOrders2(
+    int? customerId,
+    OrderStatus? status,
+    PaymentStatus? paymentStatus,
+    ShippingStatus? shippingStatus,
+    int? storeId,
+    bool orderByDateDesc,
+    DateTime? createdAtMin,
+    DateTime? createdAtMax,
+    int? sellerId = null,
+    DateTime? lastUpdateUtc = null
+    )
+    {
+        var ordersQuery = GetOrdersQuery(
+                customerId: customerId,
+                createdAtMin: createdAtMin,
+                createdAtMax: createdAtMax,
+                status: status,
+                paymentStatus: paymentStatus,
+                shippingStatus: shippingStatus,
+                storeId: storeId,
+                orderByDateDesc: orderByDateDesc,
+                sellerId: sellerId,
+                lastUpdateUtc: lastUpdateUtc
+            );
+
+        var ordersItemQuery = from order in ordersQuery
+                              join customer in _customerRepository.Table
+                              on order.CustomerId equals customer.Id
+                              join address in _addressRepository.Table
+                              on order.BillingAddressId equals address.Id
+                              join orderItem in _orderItemRepository.Table
+                              on order.Id equals orderItem.OrderId
+                              into orderItemsGroup
+                              select order.ToDto(orderItemsGroup.ToList(), address, _paymentService.DeserializeCustomValues(order), customer);
+
+
+        var ordersDto = await ordersItemQuery.ToListAsync();
+
+        HashSet<int> productIds = new();
+
+        foreach (var order in ordersDto)
+        {
+            var ids = order.OrderItems.Select(item => item.ProductId);
+
+            foreach (var id in ids)
+            {
+                productIds.Add(id);
+            }
+        }
+
+        var productsQuery = from product in _productRepository.Table
+                            where productIds.Any(id => id == product.Id)
+                            select product.ToDto(null);
+
+        var productsDto = await productsQuery.ToListAsync();
+
+        var customersDto = ordersDto.Select(o => o.Customer).ToList();
+
+        await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(customersDto);
+
+        foreach (var order in ordersDto)
+        {
+            foreach (var item in order.OrderItems)
+            {
+                item.Product = productsDto.Find(p => p.Id == item.ProductId);
+
+                if (item.Product is null)
+                {
+                    throw new Exception("There are some products null in GetOrders");
+                }
+            }
+        }
+
+        return ordersDto;
+    }
+
+
+    public List<List<object?>> GetItemsCompressed(IList<OrderDto> items)
+    {
+        /*
+        [
+          id,   string
+          deleted,  boolean
+          updated_on_ts,  number
+
+          created_on_ts,  number
+
+          order_shipping_excl_tax,  number
+          order_discount,  number
+          custom_values,  json
+      
+          order_items,  json
+          order_status,  string
+          paid_date_ts,  number
+
+          customer_id,  number
+          customer_code: z.string().optional().nullable(),
+          customer_business_name: z.string().optional().nullable(),
+          customer_rif: z.string().optional().nullable(),
+
+          billing_address_1: z.string().optional().nullable(),
+          billing_address_2: z.string().optional().nullable(),
+        ]
+      */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+
+                p.CreatedOnTs,
+
+                p.OrderShippingExclTax,
+                p.OrderDiscount,
+                p.CustomValues is null || p.CustomValues.Count == 0 ? null : p.CustomValues,
+
+                p.OrderItems is null || p.OrderItems.Count == 0 ? null :
+                   GetOrderItemsCompressed(p.OrderItems.ToList()),
+                p.OrderStatus,
+                p.PaidDateTs,
+
+                p.CustomerId,
+                p.Customer?.SystemName,
+                p.Customer?.Attributes?.GetValueOrDefault("Company"),
+                p.Customer?.Attributes?.GetValueOrDefault("Rif"),
+
+
+                p.BillingAddress.Address1,
+                p.BillingAddress.Address2,
+            }
+        ).ToList();
+    }
+
+    private List<List<object?>> GetOrderItemsCompressed(IList<OrderItemDto> items)
+    {
+        /*
+            [
+              product_sku,  number
+              unit_price_excl_tax,  number
+              unit_price_incl_tax,  number
+              quantity,  number
+            ]
+        */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.ProductId,
+                p.UnitPriceExclTax,
+                p.UnitPriceInclTax,
+                p.Quantity,
+            }
+        ).ToList();
     }
 
 

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Nop.Core.Domain.Catalog;
 using Nop.Plugin.Api.DTO.Categories;
+using Nop.Plugin.Api.DTO.Customers;
+using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Infrastructure;
 
 namespace Nop.Plugin.Api.Services;
@@ -25,4 +27,9 @@ public interface ICategoryApiService
     Task<IDictionary<int, IList<Category>>> GetProductCategories(IList<int> productIds);
 
     Task<List<CategoryDto>> GetLastestUpdatedCategoriesAsync(DateTime? lastUpdateUtc);
+
+    Task<BaseSyncResponse> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc);
+
+#nullable enable
+    List<List<object?>> GetItemsCompressed(IList<CategoryDto> items);
 }

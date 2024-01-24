@@ -45,6 +45,10 @@ using Nop.Plugin.Api.DTOs.ShoppingCarts;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
+using Nop.Plugin.Api.DTO.Base;
+using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.Models.Base;
+using MySqlX.XDevAPI.Common;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -212,6 +216,45 @@ public class CustomersController : BaseApiController
     /// <param name="fields">Fields from the customer you want your json to contain</param>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
+    [HttpPost("syncdata2", Name = "SyncCustomers2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    //[GetRequestsErrorInterceptorActionFilter]
+    public async Task<IActionResult> SyncData2(Sync2ParametersModel body)
+    {
+        var sellerEntity = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (sellerEntity is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        DateTime? lastUpdateUtc = null;
+
+        if (body.LastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
+        }
+
+        var result = await _customerApiService.GetLastestUpdatedItems2Async(
+                body.IdsInDb,
+                lastUpdateUtc,
+                sellerEntity.Id
+            );
+
+        return Ok(result);
+    }
+
+
+    /// <summary>
+    ///     Retrieve current customer
+    /// </summary>
+    /// <param name="fields">Fields from the customer you want your json to contain</param>
+    /// <response code="200">OK</response>
+    /// <response code="401">Unauthorized</response>
     [HttpGet(Name = "GetCurrentCustomer")]
     [Authorize(Policy = RegisterRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(CustomersRootObject), (int)HttpStatusCode.OK)]
@@ -228,14 +271,17 @@ public class CustomersController : BaseApiController
             return Error(HttpStatusCode.Unauthorized);
         }
 
-        var customerDto = await _customerApiService.GetCustomerByIdAsync(customerEntity.Id);
+        var customerDto = customerEntity.ToDto();
+        var customerList = new List<CustomerDto> { customerDto };
+        customerList = await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(customerList);
+        var result = customerList.FirstOrDefault();
 
-        if (customerDto == null)
+        if (result == null)
         {
             return Error(HttpStatusCode.NotFound, "customer", "not found");
         }
 
-        return OkResult(customerDto, fields);
+        return OkResult(result, fields);
     }
 
     /// <summary>
@@ -470,30 +516,7 @@ public class CustomersController : BaseApiController
 
         customerDelta.Merge(currentCustomer);
 
-
-        //Update addresses
-        //if (customerDelta.Dto.Addresses.Count > 0)
-        //{
-        //    var currentCustomerAddresses = (await CustomerService.GetAddressesByCustomerIdAsync(currentCustomer.Id)).ToDictionary(address => address.Id, address => address);
-
-        //    foreach (var passedAddress in customerDelta.Dto.Addresses)
-        //    {
-        //        var addressEntity = passedAddress.ToEntity();
-
-        //        if (currentCustomerAddresses.ContainsKey(passedAddress.Id))
-        //        {
-        //            _mappingHelper.Merge(passedAddress, currentCustomerAddresses[passedAddress.Id]);
-        //        }
-        //        else
-        //        {
-        //            await CustomerService.InsertCustomerAddressAsync(currentCustomer, addressEntity);
-        //        }
-        //    }
-        //}
-
         await CustomerService.UpdateCustomerAsync(currentCustomer);
-
-        await InsertFirstAndLastNameGenericAttributesAsync(customerDelta.Dto.FirstName, customerDelta.Dto.LastName, currentCustomer);
 
 
         //password
@@ -514,9 +537,6 @@ public class CustomersController : BaseApiController
         //await PopulateAddressCountryNamesAsync(updatedCustomer);
 
         // Set the fist and last name separately because they are not part of the customer entity, but are saved in the generic attributes.
-
-        updatedCustomer.FirstName = await _genericAttributeService.GetAttributeAsync<string>(currentCustomer, NopCustomerDefaults.FirstNameAttribute);
-        updatedCustomer.LastName = await _genericAttributeService.GetAttributeAsync<string>(currentCustomer, NopCustomerDefaults.LastNameAttribute);
 
         //activity log
         await CustomerActivityService.InsertActivityAsync("UpdateCustomer", await LocalizationService.GetResourceAsync("ActivityLog.UpdateCustomer"), currentCustomer);
