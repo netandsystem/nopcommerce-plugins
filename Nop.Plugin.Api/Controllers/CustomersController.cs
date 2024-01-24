@@ -48,6 +48,7 @@ using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Plugin.Api.DTO.Base;
 using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Models.Base;
+using MySqlX.XDevAPI.Common;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -270,14 +271,17 @@ public class CustomersController : BaseApiController
             return Error(HttpStatusCode.Unauthorized);
         }
 
-        var customerDto = await _customerApiService.GetCustomerByIdAsync(customerEntity.Id);
+        var customerDto = customerEntity.ToDto();
+        var customerList = new List<CustomerDto> { customerDto };
+        customerList = await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(customerList);
+        var result = customerList.FirstOrDefault();
 
-        if (customerDto == null)
+        if (result == null)
         {
             return Error(HttpStatusCode.NotFound, "customer", "not found");
         }
 
-        return OkResult(customerDto, fields);
+        return OkResult(result, fields);
     }
 
     /// <summary>

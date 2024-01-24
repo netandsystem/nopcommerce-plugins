@@ -408,6 +408,8 @@ public class OrderApiService : IOrderApiService
           deleted,  boolean
           updated_on_ts,  number
 
+          created_on_ts,  number
+
           order_shipping_excl_tax,  number
           order_discount,  number
           custom_values,  json
@@ -432,9 +434,11 @@ public class OrderApiService : IOrderApiService
                 p.Deleted,
                 p.UpdatedOnTs,
 
+                p.CreatedOnTs,
+
                 p.OrderShippingExclTax,
                 p.OrderDiscount,
-                p.CustomValues,
+                p.CustomValues is null || p.CustomValues.Count == 0 ? null : p.CustomValues,
 
                 p.OrderItems is null || p.OrderItems.Count == 0 ? null :
                    GetOrderItemsCompressed(p.OrderItems.ToList()),
@@ -443,8 +447,8 @@ public class OrderApiService : IOrderApiService
 
                 p.CustomerId,
                 p.Customer?.SystemName,
-                p.Customer?.Attributes?["Company"],
-                p.Customer?.Attributes?["Rif"],
+                p.Customer?.Attributes?.GetValueOrDefault("Company"),
+                p.Customer?.Attributes?.GetValueOrDefault("Rif"),
 
 
                 p.BillingAddress.Address1,

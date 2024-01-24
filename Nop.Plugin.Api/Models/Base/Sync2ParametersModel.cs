@@ -18,7 +18,7 @@ public class Sync2ParametersModel
     }
 
     [JsonProperty("ids_in_db", Required = Required.AllowNull)]
-    public List<int> IdsInDb { get; set; }
+    public List<int>? IdsInDb { get; set; }
 
     [JsonProperty("last_update_ts", Required = Required.AllowNull)]
     public long? LastUpdateTs { get; set; }
