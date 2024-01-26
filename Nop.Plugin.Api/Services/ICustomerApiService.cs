@@ -57,17 +57,12 @@ public interface ICustomerApiService
 
     Task<Address?> GetCustomerAddressAsync(int customerId, int addressId);
 
-    Task<List<CustomerDto>> GetLastestUpdatedCustomersBySellerAsync(
-        Customer seller,
-        DateTime? lastUpdateUtc
-    );
-
     Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
-        DateTime? lastUpdateUtc
+        DateTime? lastUpdateUtc, int? SellerId
     );
 
     Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
-        IList<int>? customersIds, DateTime? lastUpdateUtc, int SellerId
+        IList<int>? idsInDb, DateTime? lastUpdateUtc, int SellerId
     );
 
     Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers);

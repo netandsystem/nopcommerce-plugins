@@ -6,7 +6,7 @@ namespace Nop.Plugin.Api.DTO;
 
 [JsonObject(Title = "address")]
 //[Validator(typeof(AddressDtoValidator))]
-public class AddressDto : BaseDto
+public class AddressDto : BaseSyncDto
 {
     /// <summary>
     ///     Gets or sets the first name
@@ -79,10 +79,4 @@ public class AddressDto : BaseDto
     /// </summary>
     [JsonProperty("customer_attributes")]
     public string CustomAttributes { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the date and time of instance creation
-    /// </summary>
-    [JsonProperty("created_on_utc")]
-    public DateTime? CreatedOnUtc { get; set; }
 }

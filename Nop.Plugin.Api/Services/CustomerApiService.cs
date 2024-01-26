@@ -295,33 +295,9 @@ public class CustomerApiService : ICustomerApiService
         return await _customerService.GetCustomerAddressAsync(customerId, addressId);
     }
 
-    public async Task<List<CustomerDto>> GetLastestUpdatedCustomersBySellerAsync(
-        Customer seller,
-        DateTime? lastUpdateUtc
-    )
-    {
-        var registeredRole = await _customerService.GetCustomerRoleBySystemNameAsync("Registered");
-        var sellerRole = await _customerService.GetCustomerRoleBySystemNameAsync("Seller");
-
-        var query = from customer in _customerRepository.Table
-                    join customerRoleMap in _customerCustomerRoleMappingRepository.Table
-                        on customer.Id equals customerRoleMap.CustomerId
-                        into customerRoleList
-                    where (lastUpdateUtc == null || customer.UpdatedOnUtc > lastUpdateUtc)
-                        && customerRoleList.Any(r => r.Id == registeredRole.Id)
-                        && customerRoleList.All(r => r.Id != sellerRole.Id)
-                        && customer.SellerId == seller.Id
-                    select customer;
-
-        var customers = await query.ToListAsync();
-
-        var customersDto = await JoinCustomersWithAddressesAsync(customers);
-
-        return customersDto;
-    }
-
     public async Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
-        DateTime? lastUpdateUtc
+        DateTime? lastUpdateUtc,
+        int? sellerId
     )
     {
         var sellerRole = await _customerService.GetCustomerRoleBySystemNameAsync("Seller");
@@ -334,6 +310,7 @@ public class CustomerApiService : ICustomerApiService
                     where (lastUpdateUtc == null || customer.UpdatedOnUtc > lastUpdateUtc)
                         && customerRoleList.Any(r => r.CustomerRoleId == registeredRole.Id)
                         && customerRoleList.All(r => r.CustomerRoleId != sellerRole.Id)
+                        && (sellerId == null || customer.SellerId == sellerId)
                     select customer;
 
         var customers = await query.ToListAsync();
@@ -344,7 +321,7 @@ public class CustomerApiService : ICustomerApiService
     }
 
     public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
-        IList<int>? idsInDb, DateTime? lastUpdateUtc, int SellerId
+        IList<int>? idsInDb, DateTime? lastUpdateUtc, int sellerId
     )
     {
         /*  
@@ -352,37 +329,29 @@ public class CustomerApiService : ICustomerApiService
             s = item belongs to seller
             u = item updated after lastUpdateUtc
 
-            !ds + d!s + du  // selected
-            s(!d + u)       // update o insert
+            s               // selected
+            !d + u          // update o insert
             d!s             // delete
          
          */
 
         IList<int> _idsInDb = idsInDb ?? new List<int>();
 
-        var allCustomers = await GetLastestUpdatedCustomersAsync(null);
+        var selectedItems = await GetLastestUpdatedCustomersAsync(null, sellerId);
+        var selectedItemsIds = selectedItems.Select(x => x.Id).ToList();
 
-        var itemsToInsertOrUpdate = allCustomers.Where(x =>
+        var itemsToInsertOrUpdate = selectedItems.Where(x =>
         {
             var d = _idsInDb.Contains(x.Id);
-            var s = x.SellerId == SellerId;
             var u = lastUpdateUtc == null || x.UpdatedOnUtc > lastUpdateUtc;
 
-            return s && (!d || u);
+            return !d || u;
         }).ToList();
 
-        var itemsToDelete = allCustomers.Where(x =>
-        {
-            var d = _idsInDb.Contains(x.Id);
-            var s = x.SellerId == SellerId;
-
-            return d && !s;
-        }).ToList();
+        var idsToDelete = _idsInDb.Where(x => !selectedItemsIds.Contains(x)).ToList();
 
         itemsToInsertOrUpdate = await JoinCustomerDtosWithCustomerAttributesAsync(itemsToInsertOrUpdate);
         var itemsToSave = GetItemsCompressed(itemsToInsertOrUpdate);
-
-        var idsToDelete = itemsToDelete.Select(x => x.Id).ToList();
 
         return new BaseSyncResponse(itemsToSave, idsToDelete);
     }
@@ -415,7 +384,6 @@ public class CustomerApiService : ICustomerApiService
              email,  string
              seller_id,  number
              billing_address_id,  number
-             addresses,  json
           ]
           */
 
@@ -431,36 +399,19 @@ public class CustomerApiService : ICustomerApiService
                 p.Email,
                 p.SellerId,
                 p.BillingAddressId,
-                GetItemsCompressed(p.Addresses.ToList())
             }
         ).ToList();
     }
 
-    private List<List<object?>> GetItemsCompressed(IList<AddressDto> items)
-    {
-        /**
-          [
-            id, number
-            addressDescription1,  string
-            addressDescription2,  string
-          ]
-          */
-
-        return items.Select(p =>
-            new List<object?>()
-            {
-                p.Id,
-                p.Address1,
-                p.Address2
-            }
-        ).ToList();
-    }
-
-#nullable disable
 
     #endregion
 
+
+
     #region Private Methods
+
+#nullable disable
+
     private Dictionary<string, string> EnsureSearchQueryIsValid(string query, Func<string, Dictionary<string, string>> parseSearchQuery)
     {
         if (!string.IsNullOrEmpty(query))

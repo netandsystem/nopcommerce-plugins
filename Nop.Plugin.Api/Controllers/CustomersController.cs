@@ -196,7 +196,7 @@ public class CustomersController : BaseApiController
         }
 
         var result = await _customerApiService.GetLastestUpdatedCustomersAsync(
-                lastUpdateUtc
+                lastUpdateUtc, sellerEntity.Id
             );
 
         result = await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(result);
