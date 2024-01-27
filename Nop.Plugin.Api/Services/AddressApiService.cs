@@ -60,27 +60,6 @@ public class AddressApiService : IAddressApiService
     #region Methods
 
     /// <summary>
-    /// Gets a list of addresses mapped to customer
-    /// </summary>
-    /// <param name="customerId">Customer identifier</param>
-    /// <returns>
-    /// A task that represents the asynchronous operation
-    /// The task result contains the result
-    /// </returns>
-    public async Task<IList<AddressDto>> GetAddressesByCustomerIdAsync(int customerId)
-    {
-        var query = from address in _addressRepository.Table
-                    join cam in _customerAddressMappingRepository.Table on address.Id equals cam.AddressId
-                    where cam.CustomerId == customerId
-                    select address;
-
-        var key = _cacheManager.PrepareKeyForShortTermCache(NopCustomerServicesDefaults.CustomerAddressesCacheKey, customerId);
-
-        var addresses = await _cacheManager.GetAsync(key, async () => await query.ToListAsync());
-        return addresses.Select(a => a.ToDto()).ToList();
-    }
-
-    /// <summary>
     /// Gets a address mapped to customer
     /// </summary>
     /// <param name="customerId">Customer identifier</param>
@@ -201,7 +180,6 @@ public class AddressApiService : IAddressApiService
       
               address1,  string
               address2,  string
-              customer_id,  number
             ]
         */
 
@@ -214,7 +192,6 @@ public class AddressApiService : IAddressApiService
 
                 p.Address.Address1,
                 p.Address.Address2,
-                p.CustomerId
             }
         ).ToList();
     }

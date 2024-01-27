@@ -271,10 +271,10 @@ public class CustomersController : BaseApiController
             return Error(HttpStatusCode.Unauthorized);
         }
 
-        var customerDto = customerEntity.ToDto();
-        var customerList = new List<CustomerDto> { customerDto };
-        customerList = await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(customerList);
-        var result = customerList.FirstOrDefault();
+        var customerList = new List<Customer> { customerEntity };
+        var customerDtoList = await _customerApiService.JoinCustomersWithAddressesAsync(customerList);
+        customerDtoList = await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(customerDtoList);
+        var result = customerDtoList.FirstOrDefault();
 
         if (result == null)
         {

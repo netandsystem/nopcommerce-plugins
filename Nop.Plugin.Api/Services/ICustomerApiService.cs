@@ -18,8 +18,6 @@ public interface ICustomerApiService
 {
     Task<int> GetCustomersCountAsync();
 
-    Task<CustomerDto> GetCustomerByIdAsync(int id, bool showDeleted = false);
-
     Task<Customer> GetCustomerEntityByIdAsync(int id);
 
     //Task<IList<CustomerDto>> GetCustomersDtosAsync(
@@ -66,6 +64,8 @@ public interface ICustomerApiService
     );
 
     Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers);
+
+    Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers);
 
     List<List<object?>> GetItemsCompressed(IList<CustomerDto> items);
 }

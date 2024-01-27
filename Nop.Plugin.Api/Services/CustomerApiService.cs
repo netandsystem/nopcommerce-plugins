@@ -50,7 +50,6 @@ public class CustomerApiService : ICustomerApiService
     private static readonly string PHONE = NopCustomerDefaults.PhoneAttribute.ToLowerInvariant();
 
     private readonly IStaticCacheManager _cacheManager;
-    private readonly IAddressApiService _addressApiService;
     private readonly IGenericAttributeService _genericAttributeService;
     private readonly ICurrencyService _currencyService;
     private readonly IRepository<Customer> _customerRepository;
@@ -78,7 +77,6 @@ public class CustomerApiService : ICustomerApiService
         ILanguageService languageService,
         IStoreMappingService storeMappingService,
         IStaticCacheManager staticCacheManager,
-        IAddressApiService addressApiService,
         IGenericAttributeService genericAttributeService,
         ICurrencyService currencyService,
         ICustomerService customerService,
@@ -95,7 +93,6 @@ public class CustomerApiService : ICustomerApiService
         _languageService = languageService;
         _storeMappingService = storeMappingService;
         _cacheManager = staticCacheManager;
-        _addressApiService = addressApiService;
         _genericAttributeService = genericAttributeService;
         _currencyService = currencyService;
         _customerService = customerService;
@@ -135,47 +132,6 @@ public class CustomerApiService : ICustomerApiService
                                                                customer.RegisteredInStoreId == _storeContext.GetCurrentStore().Id));
     }
 
-    // Need to work with dto object so we can map the first and last name from generic attributes table.
-    //public async Task<IList<CustomerDto>> SearchAsync(
-    //    string queryParams = "", string order = Constants.Configurations.DefaultOrder,
-    //    int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit)
-    //{
-    //    IList<CustomerDto> result = new List<CustomerDto>();
-
-    //    var searchParams = EnsureSearchQueryIsValid(queryParams, ParseSearchQuery);
-
-    //    if (searchParams != null)
-    //    {
-    //        var query = _customerRepository.Table.Where(customer => !customer.Deleted);
-
-    //        foreach (var searchParam in searchParams)
-    //        {
-    //            // Skip non existing properties.
-    //            if (ReflectionHelper.HasProperty(searchParam.Key, typeof(Customer)))
-    //            {
-    //                // @0 is a placeholder used by dynamic linq and it is used to prevent possible sql injections.
-    //                query = query.Where(string.Format("{0} = @0 || {0}.Contains(@0)", searchParam.Key), searchParam.Value);
-    //            }
-    //            // The code bellow will search in customer addresses as well.
-    //            //else if (HasProperty(searchParam.Key, typeof(Address)))
-    //            //{
-    //            //    query = query.Where(string.Format("Addresses.Where({0} == @0).Any()", searchParam.Key), searchParam.Value);
-    //            //}
-    //        }
-
-    //        result = await HandleCustomerGenericAttributesAsync(searchParams, query, limit, page, order);
-
-    //        foreach (CustomerDto customerDto in result)
-    //        {
-    //            var customer = await query.Where(x => x.Id == customerDto.Id).FirstOrDefaultAsync();
-
-    //            await SetCustomerAddressesAsync(customer, customerDto);
-    //        }
-    //    }
-
-    //    return result;
-    //}
-
     public Task<Dictionary<string, string>> GetFirstAndLastNameByCustomerIdAsync(int customerId)
     {
         return _genericAttributeRepository.Table.Where(
@@ -190,91 +146,6 @@ public class CustomerApiService : ICustomerApiService
         var customer = await _customerRepository.Table.FirstOrDefaultAsync(c => c.Id == id && !c.Deleted);
 
         return customer;
-    }
-
-    public async Task<CustomerDto> GetCustomerByIdAsync(int id, bool showDeleted = false)
-    {
-        if (id == 0)
-        {
-            return null;
-        }
-
-        // Here we expect to get two records, one for the first name and one for the last name.
-        var customerAttributeMappings = await (from c in _customerRepository.Table //NoTracking
-                                               join a in _genericAttributeRepository.Table //NoTracking
-                                                   on c.Id equals a.EntityId
-                                               where c.Id == id &&
-                                                     a.KeyGroup == nameof(Customer)
-                                               select new CustomerAttributeMappingDto
-                                               {
-                                                   Attribute = a,
-                                                   Customer = c
-                                               }).ToListAsync();
-
-        Customer customer = null;
-        CustomerDto customerDto = null;
-
-        // This is in case we have first and last names set for the customer.
-        if (customerAttributeMappings.Count > 0)
-        {
-            customer = customerAttributeMappings.First().Customer;
-            // The customer object is the same in all mappings.
-            customerDto = customer.ToDto();
-
-            var defaultStoreLanguageId = await GetDefaultStoreLangaugeIdAsync();
-
-            // If there is no Language Id generic attribute create one with the default language id.
-            if (!customerAttributeMappings.Any(cam => cam?.Attribute != null &&
-                                                      cam.Attribute.Key.Equals(LANGUAGE_ID, StringComparison.InvariantCultureIgnoreCase)))
-            {
-                var languageId = new GenericAttribute
-                {
-                    Key = LANGUAGE_ID,
-                    Value = defaultStoreLanguageId.ToString()
-                };
-
-                var customerAttributeMappingDto = new CustomerAttributeMappingDto
-                {
-                    Customer = customer,
-                    Attribute = languageId
-                };
-
-                customerAttributeMappings.Add(customerAttributeMappingDto);
-            }
-
-            customerDto.Attributes = new Dictionary<string, string>();
-
-            foreach (var mapping in customerAttributeMappings)
-            {
-                if (!showDeleted && mapping.Customer.Deleted)
-                {
-                    continue;
-                }
-
-                if (mapping.Attribute != null)
-                {
-                    customerDto.Attributes.Add(mapping.Attribute.Key, mapping.Attribute.Value);
-                }
-            }
-        }
-        else
-        {
-            // This is when we do not have first and last name set.
-            customer = _customerRepository.Table.FirstOrDefault(c => c.Id == id);
-
-            if (customer != null)
-            {
-                if (showDeleted || !customer.Deleted)
-                {
-                    customerDto = customer.ToDto();
-                }
-            }
-        }
-
-
-        await SetCustomerAddressesAsync(customer, customerDto);
-
-        return customerDto;
     }
 
 #nullable enable
@@ -366,7 +237,14 @@ public class CustomerApiService : ICustomerApiService
                         into addressList
                     select AddAddressesToCustomerDto(customer, addressList.ToList());
 
-        return await query.ToListAsync();
+        var res = await query.ToListAsync();
+
+        if (res.Count > 0)
+        {
+            return res;
+        }
+
+        return customers.Select(x => x.ToDto()).ToList();
     }
 
     public List<List<object?>> GetItemsCompressed(IList<CustomerDto> items)
@@ -692,14 +570,25 @@ public class CustomerApiService : ICustomerApiService
         return defaultLanguageId;
     }
 
-    private async Task SetCustomerAddressesAsync(Customer customer, CustomerDto customerDto)
+    /// <summary>
+    /// Gets a list of addresses mapped to customer
+    /// </summary>
+    /// <param name="customerId">Customer identifier</param>
+    /// <returns>
+    /// A task that represents the asynchronous operation
+    /// The task result contains the result
+    /// </returns>
+    private async Task<IList<AddressDto>> GetAddressesByCustomerIdAsync(int customerId)
     {
-        customerDto.Addresses = await _addressApiService.GetAddressesByCustomerIdAsync(customer.Id);
-        if (customer.BillingAddressId != null)
-            customerDto.BillingAddress = await _addressApiService.GetCustomerAddressAsync(customer.Id, customer.BillingAddressId.Value);
-        else
-            customerDto.BillingAddress = null;
+        var query = from address in _addressRepository.Table
+                    join cam in _customerAddressMappingRepository.Table on address.Id equals cam.AddressId
+                    where cam.CustomerId == customerId
+                    select address;
 
+        var key = _cacheManager.PrepareKeyForShortTermCache(NopCustomerServicesDefaults.CustomerAddressesCacheKey, customerId);
+
+        var addresses = await _cacheManager.GetAsync(key, async () => await query.ToListAsync());
+        return addresses.Select(a => a.ToDto()).ToList();
     }
 
     public async Task<Language> GetCustomerLanguageAsync(Customer customer)
