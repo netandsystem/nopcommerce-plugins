@@ -39,6 +39,11 @@ public interface IOrderApiService
 
     List<List<object?>> GetItemsCompressed(IList<OrderDto> items);
 
+    Task<List<OrderDto>> GetLastedUpdatedOrders(
+       DateTime? lastUpdateUtc,
+       int sellerId
+   );
+
 
     //IList<Order> GetOrders(
     //    IList<int> ids = null, DateTime? createdAtMin = null, DateTime? createdAtMax = null,

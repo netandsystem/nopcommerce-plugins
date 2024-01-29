@@ -51,6 +51,7 @@ public class DependencyRegister : INopStartup
         services.AddScoped<ISpecificationAttributeApiService, SpecificationAttributesApiService>();
         services.AddScoped<INewsLetterSubscriptionApiService, NewsLetterSubscriptionApiService>();
         services.AddScoped<IManufacturerApiService, ManufacturerApiService>();
+        services.AddScoped<IOrderItemApiService, OrderItemApiService>();
 
         services.AddScoped<IMappingHelper, MappingHelper>();
         services.AddScoped<ICustomerRolesHelper, CustomerRolesHelper>();

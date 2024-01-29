@@ -300,39 +300,48 @@ public class OrderApiService : IOrderApiService
 
     public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId)
     {
-        // get date 4 months ago
-        var createdAtMin = DateTime.UtcNow.AddMonths(-4);
+        // get date 12 months ago
+        //var createdAtMin = DateTime.UtcNow.AddMonths(-12);
 
-        var items = await GetOrders2(
-                customerId: null,
-                status: null,
-                paymentStatus: null,
-                shippingStatus: null,
-                storeId: storeId,
-                orderByDateDesc: false,
-                createdAtMin: createdAtMin,
-                createdAtMax: null,
-                sellerId: sellerId,
-                lastUpdateUtc: lastUpdateUtc
-            );
+        var items = await GetLastedUpdatedOrders(lastUpdateUtc, sellerId);
 
         var itemsCompressed = GetItemsCompressed(items);
 
         return new BaseSyncResponse(itemsCompressed);
     }
 
+    public async Task<List<OrderDto>> GetLastedUpdatedOrders(
+        DateTime? lastUpdateUtc,
+        int sellerId
+    )
+    {
+        var ordersQuery = GetOrdersQuery(
+                sellerId: sellerId,
+                lastUpdateUtc: lastUpdateUtc
+            );
+
+        var ordersDtoQuery = from order in ordersQuery
+                             join customer in _customerRepository.Table
+                             on order.CustomerId equals customer.Id
+                             join address in _addressRepository.Table
+                             on order.BillingAddressId equals address.Id
+                             select order.ToDto(new List<OrderItem>(), address, _paymentService.DeserializeCustomValues(order), customer);
+
+        return await ordersDtoQuery.ToListAsync();
+    }
+
 
     public async Task<List<OrderDto>> GetOrders2(
-    int? customerId,
-    OrderStatus? status,
-    PaymentStatus? paymentStatus,
-    ShippingStatus? shippingStatus,
-    int? storeId,
-    bool orderByDateDesc,
-    DateTime? createdAtMin,
-    DateTime? createdAtMax,
-    int? sellerId = null,
-    DateTime? lastUpdateUtc = null
+        int? customerId,
+        OrderStatus? status,
+        PaymentStatus? paymentStatus,
+        ShippingStatus? shippingStatus,
+        int? storeId,
+        bool orderByDateDesc,
+        DateTime? createdAtMin,
+        DateTime? createdAtMax,
+        int? sellerId = null,
+        DateTime? lastUpdateUtc = null
     )
     {
         var ordersQuery = GetOrdersQuery(
@@ -399,7 +408,6 @@ public class OrderApiService : IOrderApiService
         return ordersDto;
     }
 
-
     public List<List<object?>> GetItemsCompressed(IList<OrderDto> items)
     {
         /*
@@ -414,7 +422,6 @@ public class OrderApiService : IOrderApiService
           order_discount,  number
           custom_values,  json
       
-          order_items,  json
           order_status,  string
           paid_date_ts,  number
 
@@ -440,8 +447,6 @@ public class OrderApiService : IOrderApiService
                 p.OrderDiscount,
                 p.CustomValues is null || p.CustomValues.Count == 0 ? null : p.CustomValues,
 
-                p.OrderItems is null || p.OrderItems.Count == 0 ? null :
-                   GetOrderItemsCompressed(p.OrderItems.ToList()),
                 p.OrderStatus,
                 p.PaidDateTs,
 
@@ -450,30 +455,8 @@ public class OrderApiService : IOrderApiService
                 p.Customer?.Attributes?.GetValueOrDefault("company"),
                 p.Customer?.Attributes?.GetValueOrDefault("rif"),
 
-
                 p.BillingAddress.Address1,
                 p.BillingAddress.Address2,
-            }
-        ).ToList();
-    }
-
-    private List<List<object?>> GetOrderItemsCompressed(IList<OrderItemDto> items)
-    {
-        /*
-            [
-              product_sku,  number
-              unit_price_excl_tax,  number
-              unit_price_incl_tax,  number
-              quantity,  number
-            ]
-        */
-
-        return items.Select(p =>
-            new List<object?>() {
-                p.ProductId,
-                p.UnitPriceExclTax,
-                p.UnitPriceInclTax,
-                p.Quantity,
             }
         ).ToList();
     }
