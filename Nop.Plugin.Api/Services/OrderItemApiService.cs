@@ -97,7 +97,11 @@ public class OrderItemApiService : IOrderItemApiService
     {
         /*
             [
-              product_sku,  number
+              id,   number
+              deleted,  boolean
+              updated_on_ts,  number
+
+              product_id,  number
               unit_price_excl_tax,  number
               unit_price_incl_tax,  number
               quantity,  number
@@ -106,6 +110,10 @@ public class OrderItemApiService : IOrderItemApiService
 
         return items.Select(p =>
             new List<object?>() {
+                p.Id,
+                false,
+                p.UpdatedOnTs,
+
                 p.ProductId,
                 p.UnitPriceExclTax,
                 p.UnitPriceInclTax,
