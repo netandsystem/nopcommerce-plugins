@@ -327,7 +327,13 @@ public class OrderApiService : IOrderApiService
                              on order.BillingAddressId equals address.Id
                              select order.ToDto(new List<OrderItem>(), address, _paymentService.DeserializeCustomValues(order), customer);
 
-        return await ordersDtoQuery.ToListAsync();
+        var ordersDto = await ordersDtoQuery.ToListAsync();
+
+        var customers = ordersDto.Select(x => x.Customer).ToList();
+
+        await _customerApiService.JoinCustomerDtosWithCustomerAttributesAsync(customers);
+
+        return ordersDto;
     }
 
 
