@@ -101,6 +101,7 @@ public class OrderItemApiService : IOrderItemApiService
               deleted,  boolean
               updated_on_ts,  number
 
+              order_id,  number
               product_id,  number
               unit_price_excl_tax,  number
               unit_price_incl_tax,  number
@@ -114,6 +115,7 @@ public class OrderItemApiService : IOrderItemApiService
                 false,
                 p.UpdatedOnTs,
 
+                p.OrderId,
                 p.ProductId,
                 p.UnitPriceExclTax,
                 p.UnitPriceInclTax,

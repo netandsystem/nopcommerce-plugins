@@ -64,4 +64,10 @@ public class OrderItemDto : BaseSyncDto
 
     [JsonProperty("product_id")]
     public int ProductId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the order identifier
+    /// </summary>
+    [JsonProperty("order_id")]
+    public int OrderId { get; set; }
 }
