@@ -24,6 +24,7 @@ using Microsoft.Extensions.Configuration;
 using Nop.Services.Payments;
 using Nop.Services.Shipping;
 using Nop.Services.ExportImport;
+using Nop.Services.Orders;
 
 namespace Nop.Plugin.Api.Infrastructure;
 
@@ -96,5 +97,6 @@ public class DependencyRegister : INopStartup
         services.AddScoped<IShippingService, ShippingService>();
 
         services.AddScoped<IImportManager, ImportManager>();
+        services.AddScoped<IShoppingCartService, ShoppingCartService>();
     }
 }
