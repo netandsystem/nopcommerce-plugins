@@ -282,10 +282,10 @@ public class CustomersController : BaseApiController
         }
 
         // 'first_name', 'last_name', 'identity_card', 'phone'
-        result.FirstName = result.Attributes?.GetValueOrDefault("first_name");
-        result.LastName = result.Attributes?.GetValueOrDefault("last_name");
-        result.IdentityCard = result.Attributes?.GetValueOrDefault("cedula");
-        result.Phone = result.Attributes?.GetValueOrDefault("phone");
+        result.FirstName = result.Attributes?.GetValueOrDefault("first_name") ?? "";
+        result.LastName = result.Attributes?.GetValueOrDefault("last_name") ?? "";
+        result.IdentityCard = result.Attributes?.GetValueOrDefault("cedula") ?? "0";
+        result.Phone = result.Attributes?.GetValueOrDefault("phone") ?? "0";
 
         return OkResult(result, fields);
     }
