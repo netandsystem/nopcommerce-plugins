@@ -281,6 +281,12 @@ public class CustomersController : BaseApiController
             return Error(HttpStatusCode.NotFound, "customer", "not found");
         }
 
+        // 'first_name', 'last_name', 'identity_card', 'phone'
+        result.FirstName = result.Attributes?.GetValueOrDefault("first_name");
+        result.LastName = result.Attributes?.GetValueOrDefault("last_name");
+        result.IdentityCard = result.Attributes?.GetValueOrDefault("cedula");
+        result.Phone = result.Attributes?.GetValueOrDefault("phone");
+
         return OkResult(result, fields);
     }
 

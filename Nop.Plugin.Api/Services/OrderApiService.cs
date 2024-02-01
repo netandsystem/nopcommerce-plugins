@@ -172,6 +172,13 @@ public class OrderApiService : IOrderApiService
         return ordersDto;
     }
 
+    //public async Task<List<OrderPost>> FilterNotCreatedOrdersPostAsync(IList<OrderPost> ordersPost)
+    //{
+    //    var query = from order in _orderRepository.Table
+    //                where !ordersPost.Contains(x => x.) && order.Deleted == false
+    //                select order.OrderGuid;
+
+    //}
 
     public async Task<PlaceOrderResult> PlaceOrderAsync(OrderPost newOrder, Customer customer, int storeId, IList<ShoppingCartItem> cart)
     {

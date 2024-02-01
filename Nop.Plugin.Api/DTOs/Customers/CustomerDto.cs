@@ -83,5 +83,15 @@ public class CustomerDto : BaseSyncDto
     [JsonProperty("seller_id")]
     public int? SellerId { get; set; }
 
+
+    [JsonProperty("first_name")]
+    public string? FirstName { get; set; }
+    [JsonProperty("last_name")]
+    public string? LastName { get; set; }
+    [JsonProperty("identity_card")]
+    public string? IdentityCard { get; set; }
+    [JsonProperty("phone")]
+    public string? Phone { get; set; }
+
     #endregion
 }
