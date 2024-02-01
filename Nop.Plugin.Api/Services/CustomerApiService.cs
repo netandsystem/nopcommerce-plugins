@@ -229,22 +229,33 @@ public class CustomerApiService : ICustomerApiService
 
     public async Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers)
     {
-        var query = from customer in customers
+        var customerIds = customers.Select(c => c.Id).ToList();
+
+        var query = from address in _addressRepository.Table
                     join customerAddressMap in _customerAddressMappingRepository.Table
-                        on customer.Id equals customerAddressMap.CustomerId
-                    join address in _addressRepository.Table
-                        on customerAddressMap.AddressId equals address.Id
-                        into addressList
-                    select AddAddressesToCustomerDto(customer, addressList.ToList());
+                       on address.Id equals customerAddressMap.AddressId
+                    where customerIds.Contains(customerAddressMap.CustomerId)
+                    select new { customerId = customerAddressMap.CustomerId, address };
 
-        var res = await query.ToListAsync();
+        var addresses1 = await query.ToListAsync();
 
-        if (res.Count > 0)
+        var addresses = addresses1.GroupBy(x => x.customerId).ToDictionary(x => x.Key, x => x.Select(y => y.address).ToList());
+
+        var customersDto = new List<CustomerDto>();
+
+        foreach (var customer in customers)
         {
-            return res;
+            var customerDto = customer.ToDto();
+
+            if (addresses.ContainsKey(customer.Id))
+            {
+                customerDto.Addresses = addresses[customer.Id].Select(address => address.ToDto()).ToList();
+            }
+
+            customersDto.Add(customerDto);
         }
 
-        return customers.Select(x => x.ToDto()).ToList();
+        return customersDto;
     }
 
     public List<List<object?>> GetItemsCompressed(IList<CustomerDto> items)
