@@ -565,22 +565,31 @@ public class OrdersController : BaseApiController
 
         OrdersIdRootObject ordersIdRootObject = new();
 
-        int billingAddressId = newOrderPostList.FirstOrDefault()?.BillingAddressId ?? 0;
+        //int billingAddressId = newOrderPostList.FirstOrDefault()?.BillingAddressId ?? 0;
 
-        if (billingAddressId == 0)
+        //if (billingAddressId == 0)
+        //{
+        //    return Error(HttpStatusCode.BadRequest, "billingAddress", "non-existing billing address");
+        //}
+
+        //var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
+
+        //if (addressValidation is null)
+        //{
+        //    return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
+        //}
+
+        var customersWithAddresses = await _customerApiService.JoinCustomersWithAddressesAsync(new List<Customer> { customer });
+
+        var address = customersWithAddresses.FirstOrDefault()?.Addresses.FirstOrDefault();
+
+        if (address is null)
         {
-            return Error(HttpStatusCode.BadRequest, "billingAddress", "non-existing billing address");
+            return Error(HttpStatusCode.BadRequest, "billingAddress", "the customer does not have a billing address");
         }
 
-        var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
-
-        if (addressValidation is null)
-        {
-            return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
-        }
-
-        customer.BillingAddressId = billingAddressId;
-        customer.ShippingAddressId = billingAddressId;
+        customer.BillingAddressId = address.Id;
+        customer.ShippingAddressId = address.Id;
 
         await CustomerService.UpdateCustomerAsync(customer); // update billing and shipping addresses
 
