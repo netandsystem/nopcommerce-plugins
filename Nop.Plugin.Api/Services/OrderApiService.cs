@@ -30,6 +30,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Text.Json;
+using Nop.Plugin.Api.Models;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -552,34 +554,67 @@ public class OrderApiService : IOrderApiService
     */
 
 
-    public async Task<PlaceOrderResult> PlaceOrderAsync2(Customer customer, OrderPost2 orderPost, int storeId)
+    public async Task<CustomPlaceOrderResult> PlaceManyOrderAsync(Customer customer, int billingAddressId, Guid orderManagerGuid, IList<OrderPost2> orderPostList, int storeId)
     {
-        var result = new PlaceOrderResult();
+        var result = new CustomPlaceOrderResult();
+
+        var uniqueOrderPostList = await GetUniqueOrders(orderPostList);
 
         try
         {
-            if (orderPost.OrderGuid == Guid.Empty)
-                throw new Exception("Order GUID is not generated");
+            // DB tasks
+            var taxRate = await GetTaxRateAsync(customer, storeId);
+            var productsIds = uniqueOrderPostList.SelectMany(x => x.OrderItems).Select(x => x.ProductId).ToArray();
+            var productList = await _productService.GetProductsByIdsAsync(productsIds);
 
-            //prepare order details
-            var details = await PreparePlaceOrderDetailsAsync(customer, orderPost);
+            var orderList = new List<Order>();
+            var orderItemList = new List<OrderItem>();
 
-            //save order
-            var order = await SaveOrderDetailsAsync(orderPost, details, storeId);
-            result.PlacedOrder = order;
+            foreach (var orderPost in uniqueOrderPostList)
+            {
+                if (orderPost.OrderGuid == Guid.Empty)
+                    throw new Exception("Order GUID is not generated");
 
-            //move shopping cart items to order items
-            await CreateCartItems(details, order, orderPost);
+                //prepare order details
+                var generalDetails = await PrepareOrderGeneralDetailsAsync(customer, billingAddressId);
+                var details = PreparePlaceOrderDetailsAsync(generalDetails, orderPost);
 
-            //notifications
-            await _orderProcessingService.SendNotificationsAndSaveNotesAsync(order);
+                //create order
+                var order = CreateOrder(orderPost, details, storeId, orderManagerGuid);
+                orderList.Add(order);
 
-            //reset checkout data
-            await _customerActivityService.InsertActivityAsync("PublicStore.PlaceOrder",
-                string.Format(await _localizationService.GetResourceAsync("ActivityLog.PublicStore.PlaceOrder"), order.Id), order);
+                var orderItems = CreateOrderItems(details, order, orderPost, taxRate, productList);
+                orderItemList.AddRange(orderItems);
+            }
 
-            //raise event       
-            await _eventPublisher.PublishAsync(new OrderPlacedEvent(order));
+            await _orderRepository.InsertAsync(orderList);
+            await _orderItemRepository.InsertAsync(orderItemList);
+
+            //inventory
+            foreach (var item in orderItemList)
+            {
+                var product = productList.FirstOrDefault(x => x.Id == item.ProductId) ?? throw new Exception("Product not found while saving inventory");
+
+                var ordersIds = orderList.Select(x => x.Id).ToList();
+
+                await _productService.AdjustInventoryAsync(product, -item.Quantity, "",
+                    $"place orders: {JsonSerializer.Serialize(ordersIds)}");
+            }
+
+            foreach (var order in orderList)
+            {
+                //notifications
+                await _orderProcessingService.SendNotificationsAndSaveNotesAsync(order);
+
+                //reset checkout data
+                await _customerActivityService.InsertActivityAsync("PublicStore.PlaceOrder",
+                                       string.Format(await _localizationService.GetResourceAsync("ActivityLog.PublicStore.PlaceOrder"), order.Id), order);
+
+                //raise event       
+                await _eventPublisher.PublishAsync(new OrderPlacedEvent(order));
+            }
+
+            result.PlacedOrders = orderList;
         }
         catch (Exception exc)
         {
@@ -699,60 +734,12 @@ public class OrderApiService : IOrderApiService
         await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.SelectedPickupPointAttribute, pickupPoint, storeId);
     }
 
-    private async Task<PlaceOrderContainer> PreparePlaceOrderDetailsAsync(
-        Customer customer,
+    private PlaceOrderContainer PreparePlaceOrderDetailsAsync(
+        PlaceOrderContainer generalDetails,
         OrderPost2 orderPost
     )
     {
-        var details = new PlaceOrderContainer();
-
-        //************* Customer *************
-
-        //check whether customer is guest
-        if (await _customerService.IsGuestAsync(customer))
-            throw new NopException("Anonymous checkout is not allowed");
-
-        details.Customer = customer;
-
-        //************* Currency *************
-        var primaryStoreCurrency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
-        details.CustomerCurrencyCode = primaryStoreCurrency.CurrencyCode;
-        details.CustomerCurrencyRate = primaryStoreCurrency.Rate;
-
-        //************* customer language *************
-        details.CustomerLanguage = await _workContext.GetWorkingLanguageAsync();
-
-        //************* billing address *************
-
-        // is order 0?
-        if (orderPost.BillingAddressId == 0)
-        {
-            throw new NopException("Billing address is 0");
-        }
-
-        // address belongs to customer?
-        var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, orderPost.BillingAddressId);
-
-        if (addressValidation is null)
-        {
-            var addresses = await _customerService.GetAddressesByCustomerIdAsync(customer.Id);
-            var address = addresses.FirstOrDefault() ?? throw new NopException("he customer does not have a billing address");
-            orderPost.BillingAddressId = address.Id;
-        }
-
-        customer.BillingAddressId = orderPost.BillingAddressId;
-        customer.ShippingAddressId = orderPost.BillingAddressId;
-
-        await _customerService.UpdateCustomerAsync(customer);
-        var billingAddress = await _customerService.GetCustomerBillingAddressAsync(customer);
-        details.BillingAddress = _addressService.CloneAddress(billingAddress);
-
-        //************* Shipping *****************
-        details.PickupInStore = false;
-        details.ShippingStatus = ShippingStatus.ShippingNotRequired;
-#nullable disable
-        details.ShippingRateComputationMethodSystemName = null;
-#nullable enable
+        var details = Copy(generalDetails);
 
         //************* Order Totals *************
 
@@ -778,11 +765,6 @@ public class OrderApiService : IOrderApiService
         //tax amount
         details.OrderTaxTotal = orderPost.OrderTax;
 
-        //VAT number
-        var customerVatStatus = (VatNumberStatus)await _genericAttributeService.GetAttributeAsync<int>(details.Customer, NopCustomerDefaults.VatNumberStatusIdAttribute);
-        if (_taxSettings.EuVatEnabled && customerVatStatus == VatNumberStatus.Valid)
-            details.VatNumber = await _genericAttributeService.GetAttributeAsync<string>(details.Customer, NopCustomerDefaults.VatNumberAttribute);
-
         //tax rates
         details.TaxRates = "";
 
@@ -795,7 +777,75 @@ public class OrderApiService : IOrderApiService
         return details;
     }
 
-    private async Task<Order> SaveOrderDetailsAsync(OrderPost2 orderPost, PlaceOrderContainer details, int storeId)
+    private static T Copy<T>(T original)
+    {
+        T copy = Activator.CreateInstance<T>();
+        foreach (var property in typeof(T).GetProperties())
+        {
+            property.SetValue(copy, property.GetValue(original));
+        }
+        return copy;
+    }
+
+    private async Task<PlaceOrderContainer> PrepareOrderGeneralDetailsAsync(
+        Customer customer,
+        int billingAddressId
+    )
+    {
+        var details = new PlaceOrderContainer();
+
+        //************* Customer *************
+
+        //check whether customer is guest
+        if (await _customerService.IsGuestAsync(customer))
+            throw new NopException("Anonymous checkout is not allowed");
+
+        details.Customer = customer;
+
+        //************* Currency *************
+        var primaryStoreCurrency = await _currencyService.GetCurrencyByIdAsync(_currencySettings.PrimaryStoreCurrencyId);
+        details.CustomerCurrencyCode = primaryStoreCurrency.CurrencyCode;
+        details.CustomerCurrencyRate = primaryStoreCurrency.Rate;
+
+        //************* customer language *************
+        details.CustomerLanguage = await _workContext.GetWorkingLanguageAsync();
+
+        //************* billing address *************
+
+        // is order 0?
+        if (billingAddressId == 0)
+        {
+            throw new NopException("Billing address is 0");
+        }
+
+        // address belongs to customer?
+        var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
+
+        if (addressValidation is null)
+        {
+            var addresses = await _customerService.GetAddressesByCustomerIdAsync(customer.Id);
+            var address = addresses.FirstOrDefault() ?? throw new NopException("he customer does not have a billing address");
+            billingAddressId = address.Id;
+        }
+
+        customer.BillingAddressId = billingAddressId;
+        customer.ShippingAddressId = billingAddressId;
+
+        await _customerService.UpdateCustomerAsync(customer);
+        var billingAddress = await _customerService.GetCustomerBillingAddressAsync(customer);
+        details.BillingAddress = _addressService.CloneAddress(billingAddress);
+
+        //************* Shipping *****************
+        details.PickupInStore = false;
+        details.ShippingStatus = ShippingStatus.ShippingNotRequired;
+#nullable disable
+        details.ShippingRateComputationMethodSystemName = null;
+#nullable enable
+
+        return details;
+    }
+
+    private Order CreateOrder(OrderPost2 orderPost, PlaceOrderContainer details, int storeId, Guid orderManagerGuid)
     {
         if (details.BillingAddress is null)
             throw new NopException("Billing address is not provided");
@@ -808,7 +858,7 @@ public class OrderApiService : IOrderApiService
             OrderGuid = orderPost.OrderGuid,
             OrderGuidGeneratedOnUtc = DateTime.UtcNow,
             CustomValues = orderPost.CustomValuesXml,
-            OrderManagerGuid = orderPost.OrderManagerGuid,
+            OrderManagerGuid = orderManagerGuid,
             SellerId = orderPost.SellerId
         };
 
@@ -877,18 +927,20 @@ public class OrderApiService : IOrderApiService
         //generate and set custom order number
         order.CustomOrderNumber = _customNumberFormatter.GenerateOrderCustomNumber(order);
 
-        await _orderService.InsertOrderAsync(order);
 
         return order;
     }
 
-    private async Task CreateCartItems(PlaceOrderContainer details, Order order, OrderPost2 orderPost)
+    private List<OrderItem> CreateOrderItems(PlaceOrderContainer details, Order order, OrderPost2 orderPost, decimal taxRate, IList<Product> productList)
     {
-        var taxRate = await GetTaxRateAsync(details.Customer, order.StoreId);
+        var orderItems = new List<OrderItem>();
+
+        if (orderPost.OrderItems.Count == 0)
+            throw new NopException("Order items are not provided");
 
         foreach (var sc in orderPost.OrderItems)
         {
-            var product = await _productService.GetProductByIdAsync(sc.ProductId);
+            var product = productList.FirstOrDefault(x => x.Id == sc.ProductId) ?? throw new NopException("Product not found");
 
             var unitPriceInclTax = product.Price * (1 + taxRate / 100);
             var unitPriceExclTax = product.Price;
@@ -919,12 +971,33 @@ public class OrderApiService : IOrderApiService
                 RentalEndDateUtc = null
             };
 
-            await _orderService.InsertOrderItemAsync(orderItem);
-
-            //inventory
-            await _productService.AdjustInventoryAsync(product, -sc.Quantity, "",
-                string.Format(await _localizationService.GetResourceAsync("Admin.StockQuantityHistory.Messages.PlaceOrder"), order.Id));
+            orderItems.Add(orderItem);
         }
+
+        return orderItems;
+    }
+
+
+    private async Task<List<OrderPost2>> GetUniqueOrders(IList<OrderPost2> orderPostList)
+    {
+        // get unique orders
+        var orderMap = new Dictionary<Guid, OrderPost2>();
+
+        foreach (var newOrderPost in orderPostList)
+        {
+            orderMap.Add((Guid)newOrderPost.OrderGuid, newOrderPost);
+        }
+
+        var uniqueOrderPostList = orderMap.Values.ToList();
+
+        var query = from orderPost in uniqueOrderPostList
+                    join order in _orderRepository.Table
+                    on orderPost.OrderGuid equals order.OrderGuid into orderGroup
+                    from joinendOrder in orderGroup.DefaultIfEmpty()
+                    where joinendOrder?.Id is null
+                    select orderPost;
+
+        return await query.ToListAsync();
     }
 
     protected virtual async Task<decimal> GetTaxRateAsync(
@@ -974,6 +1047,7 @@ public class OrderApiService : IOrderApiService
 
     #region Nested classes
 
+#nullable disable
     /// <summary>
     /// PlaceOrder container
     /// </summary>

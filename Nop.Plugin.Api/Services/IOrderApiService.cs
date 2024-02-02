@@ -8,6 +8,7 @@ using Nop.Core.Domain.Shipping;
 using Nop.Plugin.Api.DTO.Orders;
 using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Infrastructure;
+using Nop.Plugin.Api.Models;
 using Nop.Services.Orders;
 
 namespace Nop.Plugin.Api.Services;
@@ -44,7 +45,7 @@ public interface IOrderApiService
        int sellerId
    );
 
-    Task<PlaceOrderResult> PlaceOrderAsync2(Customer customer, OrderPost2 orderPost, int storeId);
+    Task<CustomPlaceOrderResult> PlaceManyOrderAsync(Customer customer, int billingAddressId, Guid orderManagerGuid, IList<OrderPost2> orderPostList, int storeId);
 
 
     //IList<Order> GetOrders(

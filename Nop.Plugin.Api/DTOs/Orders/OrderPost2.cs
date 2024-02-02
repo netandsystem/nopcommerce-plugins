@@ -11,14 +11,12 @@ namespace Nop.Plugin.Api.DTO.Orders;
 //[Validator(typeof(OrderDtoValidator))]
 public class OrderPost2
 {
-    public OrderPost2(Guid orderGuid, int billingAddressId, List<ShoppingCartItemPost> orderItems, Dictionary<string, object> customValuesXml, int sellerId, Guid orderManagerGuid, decimal orderSubtotalInclTax, decimal orderSubtotalExclTax, decimal orderTax, decimal orderTotal, string paymentMethodSystemName)
+    public OrderPost2(Guid orderGuid, List<ShoppingCartItemPost> orderItems, Dictionary<string, object> customValuesXml, int sellerId, decimal orderSubtotalInclTax, decimal orderSubtotalExclTax, decimal orderTax, decimal orderTotal, string paymentMethodSystemName)
     {
         OrderGuid = orderGuid;
-        BillingAddressId = billingAddressId;
         OrderItems = orderItems;
         CustomValuesXml = customValuesXml;
         SellerId = sellerId;
-        OrderManagerGuid = orderManagerGuid;
         OrderSubtotalInclTax = orderSubtotalInclTax;
         OrderSubtotalExclTax = orderSubtotalExclTax;
         OrderTax = orderTax;
@@ -33,13 +31,6 @@ public class OrderPost2
     /// </summary>
     [JsonProperty("order_guid")]
     public Guid OrderGuid { get; set; }
-
-
-    /// <summary>
-    ///     Gets or sets the billing address
-    /// </summary>
-    [JsonProperty("billing_address_id")]
-    public int BillingAddressId { get; set; }
 
 
     /// <summary>
@@ -59,12 +50,6 @@ public class OrderPost2
     /// </summary>
     [JsonProperty("seller_id")]
     public int SellerId { get; set; }
-
-    /// <summary>
-    /// Gets or sets the associated order manager guid
-    /// </summary>
-    [JsonProperty("order_manager_guid")]
-    public Guid OrderManagerGuid { get; set; }
 
     /// <summary>
     ///     Gets or sets the order subtotal (incl tax)

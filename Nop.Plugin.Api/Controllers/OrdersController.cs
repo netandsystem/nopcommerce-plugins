@@ -658,6 +658,64 @@ public class OrdersController : BaseApiController
         return OkResult(ordersIdRootObject);
     }
 
+
+    /// <summary>
+    ///     Place an order
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpPost("seller/batch2", Name = "PlaceManyOrders2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(List<int>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> PlaceManyOrders2([FromBody] List<OrderPost2> orderPostList, [FromQuery] int customerId, [FromQuery] int billingAddressId, [FromQuery] Guid orderManagerGuid)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var customer = await _customerApiService.GetCustomerEntityByIdAsync(customerId);
+
+        if (customer is null)
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "non-existing customer");
+        }
+
+        if (!IsCustomerRelatedToSeller(seller, customer))
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "the customer is not related to this seller");
+        }
+
+        if (orderPostList is null || orderPostList.Count == 0)
+        {
+            return Error(HttpStatusCode.BadRequest, "order_manager", "order_manager is empty");
+        }
+
+        var store = _storeContext.GetCurrentStore();
+
+        var result = await _orderApiService.PlaceManyOrderAsync(customer, billingAddressId, orderManagerGuid, orderPostList, store.Id);
+
+        if (!result.Success)
+        {
+            foreach (var placeOrderError in result.Errors)
+            {
+                ModelState.AddModelError("order_placement", placeOrderError);
+            }
+
+            return Error(HttpStatusCode.BadRequest);
+        }
+
+        var ordersId = result.PlacedOrders.Select(order => order.Id).ToList();
+
+        return OkResult(ordersId);
+    }
+
+
     #endregion
 
     #region Private methods
