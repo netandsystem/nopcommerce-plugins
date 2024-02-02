@@ -353,6 +353,20 @@ public class ProductApiService : IProductApiService
     {
         var pictures = await GetProductsPicturesAsync(products);
 
+        var imagesPathUrl = await GetImagesPathUrlAsync();
+
+        var query = from product in products
+                    join picture in pictures
+                    on product.Id equals picture.ProductId into productImagesGroup
+                    select product.ToDto(productImagesGroup.Select(item => GetPictureUrl(item.Picture, imagesPathUrl)).ToList());
+
+        return query.ToList();
+    }
+
+    public async Task<List<ProductDto>> JoinProductsAndPictures2Async(IList<Product> products)
+    {
+        var pictures = await GetProductsPicturesAsync(products);
+
         var query = from product in products
                     join picture in pictures
                     on product.Id equals picture.ProductId into productImagesGroup
@@ -389,7 +403,7 @@ public class ProductApiService : IProductApiService
     {
         var products = await GetLastestUpdatedProducts(lastUpdateUtc);
 
-        var productsWithPictures = await JoinProductsAndPicturesAsync(products);
+        var productsWithPictures = await JoinProductsAndPictures2Async(products);
 
         var productsWithPicturesAndCategories = await JoinProductsAndCategoriesAsync(productsWithPictures);
 
