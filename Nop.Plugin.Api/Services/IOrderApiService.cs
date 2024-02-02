@@ -44,6 +44,8 @@ public interface IOrderApiService
        int sellerId
    );
 
+    Task<PlaceOrderResult> PlaceOrderAsync2(Customer customer, OrderPost2 orderPost, int storeId);
+
 
     //IList<Order> GetOrders(
     //    IList<int> ids = null, DateTime? createdAtMin = null, DateTime? createdAtMax = null,

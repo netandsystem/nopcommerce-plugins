@@ -25,6 +25,7 @@ using Nop.Services.Payments;
 using Nop.Services.Shipping;
 using Nop.Services.ExportImport;
 using Nop.Services.Orders;
+using Nop.Services.Directory;
 
 namespace Nop.Plugin.Api.Infrastructure;
 
@@ -98,5 +99,23 @@ public class DependencyRegister : INopStartup
 
         services.AddScoped<IImportManager, ImportManager>();
         services.AddScoped<IShoppingCartService, ShoppingCartService>();
+
+        /*
+         private readonly ICurrencyService _currencyService;
+        private readonly CurrencySettings _currencySettings;
+        private readonly IWorkContext _workContext;
+        private readonly IAddressService _addressService;
+        private readonly TaxSettings _taxSettings;
+        private readonly IWebHelper _webHelper;
+        private readonly ICustomNumberFormatter _customNumberFormatter;
+        private readonly IProductService _productService;
+        private readonly ITaxPluginManager _taxPluginManager;
+        private readonly ILogger _logger;
+        private readonly ITaxCategoryService _taxCategoryService;
+        private readonly IOrderService _orderService;
+        private readonly ICustomerActivityService _customerActivityService;
+        private readonly IEventPublisher _eventPublisher;
+         
+         */
     }
 }
