@@ -239,77 +239,72 @@ public class OrderApiService : IOrderApiService
             newOrder.CustomValuesXml.Add("Monto en Bs", newOrder.PaymentData.AmountInBs);
         }
 
-        bool pickupInStore = newOrder.PickUpInStore ?? false;
+        //bool pickupInStore = newOrder.PickUpInStore ?? false;
 
-        if (await _shoppingCartService.ShoppingCartRequiresShippingAsync(cart))
-        {
-            if (pickupInStore && _shippingSettings.AllowPickupInStore)
-            {
-                //pickup point
-                var response = await _shippingService.GetPickupPointsAsync(customer.BillingAddressId ?? 0,
-                customer, "", storeId);
+        //if (pickupInStore && _shippingSettings.AllowPickupInStore)
+        //{
+        //    //pickup point
+        //    var response = await _shippingService.GetPickupPointsAsync(customer.BillingAddressId ?? 0,
+        //    customer, "", storeId);
 
-                if (!response.Success)
-                {
-                    return new PlaceOrderResult
-                    {
-                        Errors = response.Errors
-                    };
-                }
+        //    if (!response.Success)
+        //    {
+        //        return new PlaceOrderResult
+        //        {
+        //            Errors = response.Errors
+        //        };
+        //    }
 
-                var selectedPoint = response.PickupPoints.FirstOrDefault();
+        //    var selectedPoint = response.PickupPoints.FirstOrDefault();
 
-                await SavePickupOptionAsync(selectedPoint, customer, storeId);
-            }
-            else
-            {
-                if (newOrder.ShippingRateComputationMethodSystemName is null)
-                {
-                    throw new Exception("if pick_up_in_store is false then shipping_rate_computation_method_system_name cannot be null");
-                }
+        //    await SavePickupOptionAsync(selectedPoint, customer, storeId);
+        //}
+        //else
+        //{
+        //    if (newOrder.ShippingRateComputationMethodSystemName is null)
+        //    {
+        //        throw new Exception("if pick_up_in_store is false then shipping_rate_computation_method_system_name cannot be null");
+        //    }
 
-                if (newOrder.ShippingMethod is null)
-                {
-                    throw new Exception("if pick_up_in_store is false then shipping_method cannot be null");
-                }
+        //    if (newOrder.ShippingMethod is null)
+        //    {
+        //        throw new Exception("if pick_up_in_store is false then shipping_method cannot be null");
+        //    }
 
-                //set value indicating that "pick up in store" option has not been chosen
-#nullable disable
-                await _genericAttributeService.SaveAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, null, storeId);
-#nullable enable
+        //    //set value indicating that "pick up in store" option has not been chosen
+        //    #nullable disable
+        //    await _genericAttributeService.SaveAttributeAsync<PickupPoint>(customer, NopCustomerDefaults.SelectedPickupPointAttribute, null, storeId);
+        //    #nullable enable
 
-                //find shipping method
-                //performance optimization. try cache first
-                var shippingOptions = await _genericAttributeService.GetAttributeAsync<List<ShippingOption>>(customer,
-                    NopCustomerDefaults.OfferedShippingOptionsAttribute, storeId);
-                if (shippingOptions == null || !shippingOptions.Any())
-                {
-                    var address = await _customerService.GetCustomerShippingAddressAsync(customer);
-                    //not found? let's load them using shipping service
-                    shippingOptions = (await _shippingService.GetShippingOptionsAsync(cart, address,
-                        customer, newOrder.ShippingRateComputationMethodSystemName, storeId)).ShippingOptions.ToList();
-                }
-                else
-                {
-                    //loaded cached results. let's filter result by a chosen shipping rate computation method
-                    shippingOptions = shippingOptions.Where(so => so.ShippingRateComputationMethodSystemName.Equals(newOrder.ShippingRateComputationMethodSystemName, StringComparison.InvariantCultureIgnoreCase))
-                        .ToList();
-                }
+        //    //find shipping method
+        //    //performance optimization. try cache first
+        //    var shippingOptions = await _genericAttributeService.GetAttributeAsync<List<ShippingOption>>(customer,
+        //        NopCustomerDefaults.OfferedShippingOptionsAttribute, storeId);
+        //    if (shippingOptions == null || !shippingOptions.Any())
+        //    {
+        //        var address = await _customerService.GetCustomerShippingAddressAsync(customer);
+        //        //not found? let's load them using shipping service
+        //        shippingOptions = (await _shippingService.GetShippingOptionsAsync(cart, address,
+        //            customer, newOrder.ShippingRateComputationMethodSystemName, storeId)).ShippingOptions.ToList();
+        //    }
+        //    else
+        //    {
+        //        //loaded cached results. let's filter result by a chosen shipping rate computation method
+        //        shippingOptions = shippingOptions.Where(so => so.ShippingRateComputationMethodSystemName.Equals(newOrder.ShippingRateComputationMethodSystemName, StringComparison.InvariantCultureIgnoreCase))
+        //            .ToList();
+        //    }
 
-                var shippingOption = shippingOptions
-                    .Find(so => !string.IsNullOrEmpty(so.Name) && so.Name.Equals(newOrder.ShippingMethod, StringComparison.InvariantCultureIgnoreCase));
+        //    var shippingOption = shippingOptions
+        //        .Find(so => !string.IsNullOrEmpty(so.Name) && so.Name.Equals(newOrder.ShippingMethod, StringComparison.InvariantCultureIgnoreCase));
 
-                if (shippingOption == null)
-                {
-                    throw new Exception("shipping method not found");
-                }
+        //    if (shippingOption == null)
+        //    {
+        //        throw new Exception("shipping method not found");
+        //    }
 
-                //save
-                await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, shippingOption, storeId);
-            }
-
-        }
-
+        //    //save
+        //    await _genericAttributeService.SaveAttributeAsync(customer, NopCustomerDefaults.SelectedShippingOptionAttribute, shippingOption, storeId);
+        //}
 
         var processPaymentRequest = new ProcessPaymentRequest
         {
