@@ -597,21 +597,6 @@ public class OrdersController : BaseApiController
 
         int index = 0;
 
-        // get unique orders
-        var orderMap = new Dictionary<Guid, OrderPost>();
-
-        foreach (var newOrderPost in newOrderPostList)
-        {
-            if (newOrderPost.OrderGuid is null)
-            {
-                return Error(HttpStatusCode.BadRequest, $"order: {index} - order_guid", "the order_guid field cannot be null");
-            }
-
-            orderMap.Add((Guid)newOrderPost.OrderGuid, newOrderPost);
-        }
-
-        newOrderPostList = orderMap.Values.ToList();
-
         foreach (var newOrderPost in newOrderPostList)
         {
             if (newOrderPost.OrderItems is null)
