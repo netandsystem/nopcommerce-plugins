@@ -564,14 +564,14 @@ public class OrderApiService : IOrderApiService
 
             var orderList = new List<Order>();
             var orderItemList = new List<OrderItem>();
+            var generalDetails = await PrepareOrderGeneralDetailsAsync(customer, billingAddressId);
 
             foreach (var orderPost in uniqueOrderPostList)
             {
                 if (orderPost.OrderGuid == Guid.Empty)
-                    throw new Exception("Order GUID is not generated");
+                    throw new NopException("Order GUID is not generated");
 
                 //prepare order details
-                var generalDetails = await PrepareOrderGeneralDetailsAsync(customer, billingAddressId);
                 var details = PreparePlaceOrderDetailsAsync(generalDetails, orderPost);
 
                 //create order
@@ -935,6 +935,11 @@ public class OrderApiService : IOrderApiService
 
         foreach (var sc in orderPost.OrderItems)
         {
+            if (sc.Quantity <= 0)
+            {
+                throw new NopException($"Quantity must be greater than zero in order item with product ID {sc.ProductId}");
+            }
+
             var product = productList.FirstOrDefault(x => x.Id == sc.ProductId) ?? throw new NopException("Product not found");
 
             var unitPriceInclTax = product.Price * (1 + taxRate / 100);
@@ -963,7 +968,8 @@ public class OrderApiService : IOrderApiService
                 LicenseDownloadId = 0,
                 ItemWeight = 0,
                 RentalStartDateUtc = null,
-                RentalEndDateUtc = null
+                RentalEndDateUtc = null,
+                UpdatedOnUtc = DateTime.UtcNow
             };
 
             orderItems.Add(orderItem);
