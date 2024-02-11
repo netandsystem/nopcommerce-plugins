@@ -37,6 +37,8 @@ using MailKit.Search;
 using static Microsoft.Extensions.Logging.EventSource.LoggingEventSource;
 using static Nop.Services.ExportImport.ImportManager;
 using Newtonsoft.Json;
+using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.Models.Base;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -370,6 +372,26 @@ public class ProductsController : BaseApiController
         };
 
         return OkResult(productsRootObject, fields);
+    }
+
+
+    [HttpPost("syncdata2", Name = "SyncProducts2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SyncData2(Sync2ParametersModel body)
+    {
+        DateTime? lastUpdateUtc = null;
+
+        if (body.LastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
+        }
+
+        var result = await _productApiService.GetLastestUpdatedItems2Async(lastUpdateUtc);
+
+        return Ok(result);
     }
 
     [HttpPost("picture", Name = "ImportProductsPicturesFromJsonAsync")]

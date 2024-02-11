@@ -27,6 +27,7 @@ using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.MappingExtensions;
 using Nop.Services.ExportImport;
 using static Nop.Services.ExportImport.ImportManager;
+using Nop.Plugin.Api.DTOs.Base;
 
 
 namespace Nop.Plugin.Api.Services;
@@ -352,12 +353,24 @@ public class ProductApiService : IProductApiService
     {
         var pictures = await GetProductsPicturesAsync(products);
 
-        string imagePathUrl = await GetImagesPathUrlAsync();
+        var imagesPathUrl = await GetImagesPathUrlAsync();
 
         var query = from product in products
                     join picture in pictures
                     on product.Id equals picture.ProductId into productImagesGroup
-                    select product.ToDto(productImagesGroup.Select(item => GetPictureUrl(item.Picture, imagePathUrl)).ToList());
+                    select product.ToDto(productImagesGroup.Select(item => GetPictureUrl(item.Picture, imagesPathUrl)).ToList());
+
+        return query.ToList();
+    }
+
+    public async Task<List<ProductDto>> JoinProductsAndPictures2Async(IList<Product> products)
+    {
+        var pictures = await GetProductsPicturesAsync(products);
+
+        var query = from product in products
+                    join picture in pictures
+                    on product.Id equals picture.ProductId into productImagesGroup
+                    select product.ToDto(productImagesGroup.Select(item => GetPictureFile(item.Picture)).ToList());
 
         return query.ToList();
     }
@@ -383,6 +396,22 @@ public class ProductApiService : IProductApiService
 
         return await query.ToListAsync();
     }
+
+    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
+        DateTime? lastUpdateUtc
+    )
+    {
+        var products = await GetLastestUpdatedProducts(lastUpdateUtc);
+
+        var productsWithPictures = await JoinProductsAndPictures2Async(products);
+
+        var productsWithPicturesAndCategories = await JoinProductsAndCategoriesAsync(productsWithPictures);
+
+        var productsCompressed = GetItemsCompressed(productsWithPicturesAndCategories);
+
+        return new BaseSyncResponse(productsCompressed, new List<int>());
+    }
+
 
     private ProductDto JoinProductWithCategoryIds(ProductDto productDto, List<int> categoryIds)
     {
@@ -432,6 +461,43 @@ public class ProductApiService : IProductApiService
         return (productsUpdatedSP, productsRejectedSP);
     }
 
+    public List<List<object?>> GetItemsCompressed(IList<ProductDto> products)
+    {
+        /*
+           [
+             id,
+             deleted,
+             updated_on_ts,
+
+             name,
+             price,
+             sku,
+             short_description,
+             images,
+             is_tax_exempt,
+             stock_quantity,
+             published,
+             category_ids,
+           ]
+        */
+
+        return products.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.Name,
+                p.Price,
+                p.Sku,
+                p.ShortDescription,
+                p.Images?.FirstOrDefault(),
+                p.IsTaxExempt,
+                p.StockQuantity,
+                p.Published,
+                p.CategoryIds?.FirstOrDefault()
+            }
+        ).ToList();
+    }
 
     #endregion
 
@@ -458,6 +524,13 @@ public class ProductApiService : IProductApiService
                     select new InternalProductPicture(picture, pp.ProductId);
 
         return query;
+    }
+
+    private string GetPictureFile(Picture picture)
+    {
+        var lastPart = GetFileExtensionFromMimeTypeAsync(picture.MimeType);
+
+        return $"{picture.Id:0000000}_0.{lastPart}";
     }
 
     private string GetPictureUrl(Picture picture, string imagesPathUrl)

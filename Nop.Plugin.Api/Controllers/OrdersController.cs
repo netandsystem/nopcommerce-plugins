@@ -50,6 +50,8 @@ using Nop.Core.Domain.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Core.Domain.News;
+using Nop.Plugin.Api.Models.Base;
+using Nop.Plugin.Api.DTOs.Base;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -298,6 +300,39 @@ public class OrdersController : BaseApiController
         return OkResult(ordersRootObject, fields);
     }
 
+    /// <summary>
+    ///     Receive a list of all Orders
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpPost("syncdata2", Name = "SyncOrders2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    public async Task<IActionResult> SyncData2(Sync2ParametersModel body)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var storeId = _storeContext.GetCurrentStore().Id;
+
+        DateTime? lastUpdateUtc = null;
+
+        if (body.LastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
+        }
+
+        var result = await _orderApiService.GetLastestUpdatedItems2Async(lastUpdateUtc, seller.Id, storeId);
+
+        return Ok(result);
+    }
 
 
     /// <summary>
@@ -530,22 +565,31 @@ public class OrdersController : BaseApiController
 
         OrdersIdRootObject ordersIdRootObject = new();
 
-        int billingAddressId = newOrderPostList.FirstOrDefault()?.BillingAddressId ?? 0;
+        //int billingAddressId = newOrderPostList.FirstOrDefault()?.BillingAddressId ?? 0;
 
-        if (billingAddressId == 0)
+        //if (billingAddressId == 0)
+        //{
+        //    return Error(HttpStatusCode.BadRequest, "billingAddress", "non-existing billing address");
+        //}
+
+        //var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
+
+        //if (addressValidation is null)
+        //{
+        //    return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
+        //}
+
+        var customersWithAddresses = await _customerApiService.JoinCustomersWithAddressesAsync(new List<Customer> { customer });
+
+        var address = customersWithAddresses.FirstOrDefault()?.Addresses.FirstOrDefault();
+
+        if (address is null)
         {
-            return Error(HttpStatusCode.BadRequest, "billingAddress", "non-existing billing address");
+            return Error(HttpStatusCode.BadRequest, "billingAddress", "the customer does not have a billing address");
         }
 
-        var addressValidation = await _customerApiService.GetCustomerAddressAsync(customer.Id, billingAddressId);
-
-        if (addressValidation is null)
-        {
-            return Error(HttpStatusCode.BadRequest, "billingAddress", "the address does not belong to client");
-        }
-
-        customer.BillingAddressId = billingAddressId;
-        customer.ShippingAddressId = billingAddressId;
+        customer.BillingAddressId = address.Id;
+        customer.ShippingAddressId = address.Id;
 
         await CustomerService.UpdateCustomerAsync(customer); // update billing and shipping addresses
 
@@ -598,6 +642,64 @@ public class OrdersController : BaseApiController
 
         return OkResult(ordersIdRootObject);
     }
+
+
+    /// <summary>
+    ///     Place an order
+    /// </summary>
+    /// <response code="200">OK</response>
+    /// <response code="400">Bad Request</response>
+    /// <response code="401">Unauthorized</response>
+    [HttpPost("seller/batch2", Name = "PlaceManyOrders2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(List<int>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> PlaceManyOrders2([FromBody] List<OrderPost2> orderPostList, [FromQuery] int customerId, [FromQuery] int billingAddressId, [FromQuery] Guid orderManagerGuid)
+    {
+        var seller = await _authenticationService.GetAuthenticatedCustomerAsync();
+
+        if (seller is null)
+        {
+            return Error(HttpStatusCode.Unauthorized);
+        }
+
+        var customer = await _customerApiService.GetCustomerEntityByIdAsync(customerId);
+
+        if (customer is null)
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "non-existing customer");
+        }
+
+        if (!IsCustomerRelatedToSeller(seller, customer))
+        {
+            return Error(HttpStatusCode.BadRequest, "customer_id", "the customer is not related to this seller");
+        }
+
+        if (orderPostList is null || orderPostList.Count == 0)
+        {
+            return Error(HttpStatusCode.BadRequest, "order_manager", "order_manager is empty");
+        }
+
+        var store = _storeContext.GetCurrentStore();
+
+        var result = await _orderApiService.PlaceManyOrderAsync(customer, billingAddressId, orderManagerGuid, orderPostList, store.Id);
+
+        if (!result.Success)
+        {
+            foreach (var placeOrderError in result.Errors)
+            {
+                ModelState.AddModelError("order_placement", placeOrderError);
+            }
+
+            return Error(HttpStatusCode.BadRequest);
+        }
+
+        var ordersId = result.PlacedOrders.Select(order => order.Id).ToList();
+
+        return OkResult(ordersId);
+    }
+
 
     #endregion
 

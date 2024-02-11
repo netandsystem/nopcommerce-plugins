@@ -23,7 +23,7 @@ namespace Nop.Plugin.Api.Authorization.Requirements;
 public class CustomerRoleRequirement : IAuthorizationRequirement
 {
     private readonly string _roleName;
-    private readonly Constants.Roles _roleEnum;
+    //private readonly Constants.Roles _roleEnum;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ICustomerService _customerService;
     private readonly IStoreContext _storeContext;

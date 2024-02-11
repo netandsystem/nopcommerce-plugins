@@ -16,12 +16,14 @@ using Nop.Plugin.Api.DTO.Categories;
 using Nop.Plugin.Api.DTO.Errors;
 using Nop.Plugin.Api.DTO.Images;
 using Nop.Plugin.Api.DTO.Products;
+using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Factories;
 using Nop.Plugin.Api.Helpers;
 using Nop.Plugin.Api.Infrastructure;
 using Nop.Plugin.Api.JSON.ActionResults;
 using Nop.Plugin.Api.JSON.Serializers;
 using Nop.Plugin.Api.ModelBinders;
+using Nop.Plugin.Api.Models.Base;
 using Nop.Plugin.Api.Models.CategoriesParameters;
 using Nop.Plugin.Api.Services;
 using Nop.Services.Catalog;
@@ -99,6 +101,25 @@ public class CategoriesController : BaseApiController
         };
 
         return OkResult(rootObject, fields);
+    }
+
+    [HttpPost("syncdata2", Name = "SyncCategories2")]
+    [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
+    [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
+    [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
+    public async Task<IActionResult> SyncData2(Sync2ParametersModel body)
+    {
+        DateTime? lastUpdateUtc = null;
+
+        if (body.LastUpdateTs.HasValue)
+        {
+            lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
+        }
+
+        var result = await _categoryApiService.GetLastestUpdatedItems2Async(lastUpdateUtc);
+
+        return Ok(result);
     }
 
     /// <summary>

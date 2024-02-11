@@ -11,7 +11,7 @@ namespace Nop.Plugin.Api.DTO.OrderItems;
 
 //[Validator(typeof(OrderItemDtoValidator))]
 [JsonObject(Title = "order_item")]
-public class OrderItemDto : BaseDto
+public class OrderItemDto : BaseSyncDto
 {
     /// <summary>
     ///     Gets or sets the quantity
@@ -64,4 +64,10 @@ public class OrderItemDto : BaseDto
 
     [JsonProperty("product_id")]
     public int ProductId { get; set; }
+
+    /// <summary>
+    /// Gets or sets the order identifier
+    /// </summary>
+    [JsonProperty("order_id")]
+    public int OrderId { get; set; }
 }

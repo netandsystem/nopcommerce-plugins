@@ -6,6 +6,8 @@ using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Directory;
 using Nop.Core.Domain.Localization;
 using Nop.Plugin.Api.DTO.Customers;
+using Nop.Plugin.Api.DTO.Products;
+using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Infrastructure;
 
 namespace Nop.Plugin.Api.Services;
@@ -16,18 +18,16 @@ public interface ICustomerApiService
 {
     Task<int> GetCustomersCountAsync();
 
-    Task<CustomerDto> GetCustomerByIdAsync(int id, bool showDeleted = false);
-
     Task<Customer> GetCustomerEntityByIdAsync(int id);
 
-    Task<IList<CustomerDto>> GetCustomersDtosAsync(
-        DateTime? createdAtMin = null, DateTime? createdAtMax = null,
-        int limit = Constants.Configurations.DefaultLimit, int page = Constants.Configurations.DefaultPageValue,
-        int sinceId = Constants.Configurations.DefaultSinceId);
+    //Task<IList<CustomerDto>> GetCustomersDtosAsync(
+    //    DateTime? createdAtMin = null, DateTime? createdAtMax = null,
+    //    int limit = Constants.Configurations.DefaultLimit, int page = Constants.Configurations.DefaultPageValue,
+    //    int sinceId = Constants.Configurations.DefaultSinceId);
 
-    Task<IList<CustomerDto>> SearchAsync(
-        string query = "", string order = Constants.Configurations.DefaultOrder,
-        int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit);
+    //Task<IList<CustomerDto>> SearchAsync(
+    //    string query = "", string order = Constants.Configurations.DefaultOrder,
+    //    int page = Constants.Configurations.DefaultPageValue, int limit = Constants.Configurations.DefaultLimit);
 
     Task<Dictionary<string, string>> GetFirstAndLastNameByCustomerIdAsync(int customerId);
 
@@ -55,14 +55,17 @@ public interface ICustomerApiService
 
     Task<Address?> GetCustomerAddressAsync(int customerId, int addressId);
 
-    Task<List<CustomerDto>> GetLastestUpdatedCustomersBySellerAsync(
-        Customer seller,
-        DateTime? lastUpdateUtc
+    Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
+        DateTime? lastUpdateUtc, int? SellerId
     );
 
-    Task<List<CustomerDto>> GetLastestUpdatedCustomersAsync(
-        DateTime? lastUpdateUtc
+    Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
+        IList<int>? idsInDb, DateTime? lastUpdateUtc, int SellerId
     );
 
     Task<List<CustomerDto>> JoinCustomerDtosWithCustomerAttributesAsync(IList<CustomerDto> customers);
+
+    Task<List<CustomerDto>> JoinCustomersWithAddressesAsync(List<Customer> customers);
+
+    List<List<object?>> GetItemsCompressed(IList<CustomerDto> items);
 }

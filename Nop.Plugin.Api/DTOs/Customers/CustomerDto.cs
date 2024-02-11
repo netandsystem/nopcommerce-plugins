@@ -21,11 +21,14 @@ public class CustomerDto : BaseSyncDto
     [JsonProperty("user_name", Required = Required.Always)]
     public string Username { get; set; } = string.Empty;
 
-    [JsonProperty("first_name", Required = Required.Always)]
-    public string FirstName { get; set; } = string.Empty;
+    [JsonProperty("system_name")]
+    public string SystemName { get; set; } = string.Empty;
 
-    [JsonProperty("last_name", Required = Required.Always)]
-    public string LastName { get; set; } = string.Empty;
+    /// <summary>
+    /// Gets or sets the billing address identifier
+    /// </summary>
+    [JsonProperty("billing_address_id", Required = Required.AllowNull)]
+    public int? BillingAddressId { get; set; }
 
     /// <summary>
     /// Gets or sets the vendor identifier with which this customer is associated (maganer)
@@ -69,21 +72,6 @@ public class CustomerDto : BaseSyncDto
     }
 
     /// <summary>
-    /// get or set the custom attributes
-    /// </summary>
-    //[JsonProperty("custom_customer_attributes")]
-    //public string CustomCustomerAttributes { get; set; }
-
-    [JsonProperty("identity_card")]
-    public string? IdentityCard { get; set; } = null;
-
-    /// <summary>
-    /// get or set the custom attributes
-    /// </summary>
-    [JsonProperty("phone")]
-    public string? Phone { get; set; } = null;
-
-    /// <summary>
     /// Gets or sets the email
     /// </summary>
     [JsonProperty("email")]
@@ -96,6 +84,14 @@ public class CustomerDto : BaseSyncDto
     public int? SellerId { get; set; }
 
 
+    [JsonProperty("first_name")]
+    public string? FirstName { get; set; }
+    [JsonProperty("last_name")]
+    public string? LastName { get; set; }
+    [JsonProperty("identity_card")]
+    public string? IdentityCard { get; set; }
+    [JsonProperty("phone")]
+    public string? Phone { get; set; }
 
     #endregion
 }
