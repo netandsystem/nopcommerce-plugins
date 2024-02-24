@@ -478,7 +478,7 @@ public class OrderApiService : IOrderApiService
           deleted,  boolean
           updated_on_ts,  number
 
-          guid, string
+          order_manager_guid, string
           created_on_ts,  number
 
           order_shipping_excl_tax,  number
@@ -504,7 +504,7 @@ public class OrderApiService : IOrderApiService
                 p.Deleted,
                 p.UpdatedOnTs,
 
-                p.OrderGuid,
+                p.OrderManagerGuid,
                 p.CreatedOnTs,
 
                 p.OrderShippingExclTax,
