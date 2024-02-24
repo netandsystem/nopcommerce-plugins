@@ -329,7 +329,7 @@ public class OrdersController : BaseApiController
             lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
         }
 
-        var result = await _orderApiService.GetLastestUpdatedItems2Async(lastUpdateUtc, seller.Id, storeId);
+        var result = await _orderApiService.GetLastestUpdatedItems2Async(body.IdsInDb, lastUpdateUtc, seller.Id);
 
         return Ok(result);
     }
