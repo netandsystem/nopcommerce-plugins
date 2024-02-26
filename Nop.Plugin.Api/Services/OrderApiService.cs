@@ -354,16 +354,40 @@ public class OrderApiService : IOrderApiService
     }
 
 
-    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(DateTime? lastUpdateUtc, int sellerId, int storeId)
+    public async Task<BaseSyncResponse> GetLastestUpdatedItems2Async(IList<int>? idsInDb, DateTime? lastUpdateUtc, int sellerId)
     {
         // get date 12 months ago
         //var createdAtMin = DateTime.UtcNow.AddMonths(-12);
 
-        var items = await GetLastedUpdatedOrders(lastUpdateUtc, sellerId);
+        /*
+         d = item in db
+            s = item belongs to seller
+            u = item updated after lastUpdateUtc
 
-        var itemsCompressed = GetItemsCompressed(items);
+            s               // selected
+            !d + u          // update o insert
+            d!s             // delete
+         
+         */
 
-        return new BaseSyncResponse(itemsCompressed);
+        IList<int> _idsInDb = idsInDb ?? new List<int>();
+
+        var selectedItems = await GetLastedUpdatedOrders(null, sellerId);
+        var selectedItemsIds = selectedItems.Select(x => x.Id).ToList();
+
+        var itemsToInsertOrUpdate = selectedItems.Where(x =>
+        {
+            var d = _idsInDb.Contains(x.Id);
+            var u = lastUpdateUtc == null || x.UpdatedOnUtc > lastUpdateUtc;
+
+            return !d || u;
+        }).ToList();
+
+        var idsToDelete = _idsInDb.Where(x => !selectedItemsIds.Contains(x)).ToList();
+
+        var itemsToSave = GetItemsCompressed(itemsToInsertOrUpdate);
+
+        return new BaseSyncResponse(itemsToSave, idsToDelete);
     }
 
     public async Task<List<OrderDto>> GetLastedUpdatedOrders(
@@ -478,6 +502,7 @@ public class OrderApiService : IOrderApiService
           deleted,  boolean
           updated_on_ts,  number
 
+          order_manager_guid, string
           created_on_ts,  number
 
           order_shipping_excl_tax,  number
@@ -503,6 +528,7 @@ public class OrderApiService : IOrderApiService
                 p.Deleted,
                 p.UpdatedOnTs,
 
+                p.OrderManagerGuid,
                 p.CreatedOnTs,
 
                 p.OrderShippingExclTax,
