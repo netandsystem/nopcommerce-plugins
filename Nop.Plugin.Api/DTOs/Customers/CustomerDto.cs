@@ -90,8 +90,12 @@ public class CustomerDto : BaseSyncDto
     public string? LastName { get; set; }
     [JsonProperty("identity_card")]
     public string? IdentityCard { get; set; }
+
     [JsonProperty("phone")]
     public string? Phone { get; set; }
+
+    [JsonProperty("debt")]
+    public decimal Debt { get; set; }
 
     #endregion
 }
