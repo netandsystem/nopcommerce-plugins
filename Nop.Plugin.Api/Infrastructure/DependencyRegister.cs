@@ -99,6 +99,7 @@ public class DependencyRegister : INopStartup
 
         services.AddScoped<IImportManager, ImportManager>();
         services.AddScoped<IShoppingCartService, ShoppingCartService>();
+        services.AddScoped<ISellerStatisticsApiService, SellerStatisticsApiService>();
 
         /*
          private readonly ICurrencyService _currencyService;

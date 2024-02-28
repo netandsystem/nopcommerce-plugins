@@ -10,6 +10,7 @@ using Nop.Core.Domain.Localization;
 using Nop.Core.Domain.Messages;
 using Nop.Core.Domain.Orders;
 using Nop.Core.Domain.Shipping;
+using Nop.Core.Domain.Statistics;
 using Nop.Core.Domain.Stores;
 using Nop.Core.Domain.Tax;
 using Nop.Core.Domain.Topics;
@@ -34,6 +35,7 @@ using Nop.Plugin.Api.DTO.SpecificationAttributes;
 using Nop.Plugin.Api.DTO.Stores;
 using Nop.Plugin.Api.DTOs.ShippingMethod;
 using Nop.Plugin.Api.DTOs.StateProvinces;
+using Nop.Plugin.Api.DTOs.Statistics;
 using Nop.Plugin.Api.DTOs.Taxes;
 using Nop.Plugin.Api.DTOs.Topics;
 using Nop.Plugin.Api.MappingExtensions;
@@ -98,6 +100,7 @@ namespace Nop.Plugin.Api.AutoMapper
             CreateMap<TaxCategory, TaxCategoryDto>();
 
             CreateMap<ShippingMethod, ShippingMethodDto>();
+            CreateMap<SellerStatistics, SellerStatisticsDto>();
         }
 
         public int Order => 0;
@@ -182,7 +185,7 @@ namespace Nop.Plugin.Api.AutoMapper
         {
             AutoMapperApiConfiguration.MapperConfigurationExpression.CreateMap<Product, ProductDto>()
                                       .IgnoreAllNonExisting();
-                                      //.ForMember(p => p.RequiredProductIds, o => o.Ignore());
+            //.ForMember(p => p.RequiredProductIds, o => o.Ignore());
             //.ForMember(x => x.FullDescription, y => y.MapFrom(src => WebUtility.HtmlEncode(src.FullDescription)))
             //.ForMember(x => x.Tags,
             //           y => y.MapFrom(src => src.ProductProductTagMappings.Select(x => x.ProductTag.Name)));
