@@ -17,16 +17,14 @@ public class SellerStatisticsApiService : ISellerStatisticsApiService
 
     private readonly IRepository<SellerStatistics> _sellerStatisticsRepository;
 
-    public SellerStatisticsApiService(IRepository<SellerStatistics> sellerStatisticsRepository)
-    {
-        _sellerStatisticsRepository = sellerStatisticsRepository;
-    }
-
     #endregion
 
     #region Ctr
 
-
+    public SellerStatisticsApiService(IRepository<SellerStatistics> sellerStatisticsRepository)
+    {
+        _sellerStatisticsRepository = sellerStatisticsRepository;
+    }
 
     #endregion
 

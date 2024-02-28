@@ -24,7 +24,7 @@ namespace Nop.Plugin.Api.Controllers;
 
 #nullable enable
 
-[Route("api/customers")]
+[Route("api/seller-statistics")]
 
 public class SellerStatisticsController : BaseApiController
 {
@@ -69,7 +69,7 @@ public class SellerStatisticsController : BaseApiController
     /// <param name="fields">Fields from the customer you want your json to contain</param>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
-    [HttpPost("syncdata2", Name = "SyncCustomers2")]
+    [HttpPost("syncdata2", Name = "SyncSellerStatistics2")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
