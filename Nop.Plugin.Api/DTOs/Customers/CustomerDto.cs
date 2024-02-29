@@ -94,8 +94,8 @@ public class CustomerDto : BaseSyncDto
     [JsonProperty("phone")]
     public string? Phone { get; set; }
 
-    [JsonProperty("debt")]
-    public decimal Debt { get; set; }
+    [JsonProperty("balance")]
+    public decimal Balance { get; set; }
 
     #endregion
 }

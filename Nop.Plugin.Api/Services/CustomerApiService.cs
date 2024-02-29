@@ -274,7 +274,7 @@ public class CustomerApiService : ICustomerApiService
              seller_id,  number
              billing_address_id,  number
 
-             debt, number
+             balance, number
           ]
           */
 
@@ -290,7 +290,7 @@ public class CustomerApiService : ICustomerApiService
                 p.Email,
                 p.SellerId,
                 p.BillingAddressId,
-                p.Debt
+                p.Balance
             }
         ).ToList();
     }
