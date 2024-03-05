@@ -56,7 +56,7 @@ namespace Nop.Plugin.Api.Controllers;
 
 [Route("api/customers")]
 
-public class CustomersController : BaseApiController
+public class CustomersController : BaseSyncController<CustomerDto>
 {
     #region Fields
 
@@ -69,7 +69,6 @@ public class CustomersController : BaseApiController
     private readonly ILanguageService _languageService;
     private readonly IPermissionService _permissionService;
     private readonly IAddressService _addressService;
-    private readonly IAuthenticationService _authenticationService;
     private readonly ICurrencyService _currencyService;
     private readonly IMappingHelper _mappingHelper;
     private readonly INewsLetterSubscriptionService _newsLetterSubscriptionService;
@@ -78,7 +77,6 @@ public class CustomersController : BaseApiController
     private readonly ICustomerAttributeParser _customerAttributeParser;
     private readonly IWorkContext _workContext;
     private readonly IEventPublisher _eventPublisher;
-    private readonly IStoreContext _storeContext;
     private readonly GdprSettings _gdprSettings;
     private readonly IGdprService _gdprService;
     private readonly IWorkflowMessageService _workflowMessageService;
@@ -121,21 +119,21 @@ public class CustomersController : BaseApiController
         IPictureService pictureService, ILanguageService languageService,
         IPermissionService permissionService,
         IAddressService addressService,
-        IAuthenticationService authenticationService,
         ICurrencyService currencyService,
         ICustomerRegistrationService customerRegistrationService,
         ICustomerAttributeService customerAttributeService,
         ICustomerAttributeParser customerAttributeParser,
         IWorkContext workContext,
         IEventPublisher eventPublisher,
-        IStoreContext storeContext,
         GdprSettings gdprSettings,
         IGdprService gdprService,
         IWorkflowMessageService workflowMessageService,
-        LocalizationSettings localizationSettings
+        LocalizationSettings localizationSettings,
+        IAuthenticationService authenticationService,
+        IStoreContext storeContext
     ) :
-        base(jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService, customerActivityService,
-             localizationService, pictureService)
+        base(customerApiService, jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService, customerActivityService,
+             localizationService, pictureService, authenticationService, storeContext)
     {
         _customerApiService = customerApiService;
         _factory = factory;
@@ -145,7 +143,6 @@ public class CustomersController : BaseApiController
         _languageService = languageService;
         _permissionService = permissionService;
         _addressService = addressService;
-        _authenticationService = authenticationService;
         _currencyService = currencyService;
         _encryptionService = encryptionService;
         _genericAttributeService = genericAttributeService;
@@ -155,7 +152,6 @@ public class CustomersController : BaseApiController
         _customerAttributeParser = customerAttributeParser;
         _workContext = workContext;
         _eventPublisher = eventPublisher;
-        _storeContext = storeContext;
         _gdprSettings = gdprSettings;
         _gdprService = gdprService;
         _workflowMessageService = workflowMessageService;

@@ -5,6 +5,7 @@ using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Core.Domain.Catalog;
 using Nop.Core.Domain.Discounts;
 using Nop.Core.Domain.Media;
@@ -26,6 +27,7 @@ using Nop.Plugin.Api.ModelBinders;
 using Nop.Plugin.Api.Models.Base;
 using Nop.Plugin.Api.Models.CategoriesParameters;
 using Nop.Plugin.Api.Services;
+using Nop.Services.Authentication;
 using Nop.Services.Catalog;
 using Nop.Services.Customers;
 using Nop.Services.Discounts;
@@ -41,7 +43,7 @@ namespace Nop.Plugin.Api.Controllers;
 #nullable enable
 
 [Route("api/categories")]
-public class CategoriesController : BaseApiController
+public class CategoriesController : BaseSyncController<CategoryDto>
 {
     #region Fields
     private readonly ICategoryApiService _categoryApiService;
@@ -67,8 +69,11 @@ public class CategoriesController : BaseApiController
         IAclService aclService,
         ICustomerService customerService,
         IFactory<Category> factory,
-        IDTOHelper dtoHelper) : base(jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService,
-                                     customerActivityService, localizationService, pictureService)
+        IDTOHelper dtoHelper,
+        IAuthenticationService authenticationService,
+        IStoreContext storeContext
+        ) : base(categoryApiService, jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService,
+                                     customerActivityService, localizationService, pictureService, authenticationService, storeContext)
     {
         _categoryApiService = categoryApiService;
         _categoryService = categoryService;

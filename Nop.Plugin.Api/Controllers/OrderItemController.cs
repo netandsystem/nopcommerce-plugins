@@ -39,6 +39,7 @@ using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Models.Base;
 using Nop.Services.Authentication;
+using Nop.Plugin.Api.DTO.OrderItems;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -46,12 +47,11 @@ namespace Nop.Plugin.Api.Controllers;
 
 [Route("api/order-items")]
 
-public class OrderItemController : BaseApiController
+public class OrderItemController : BaseSyncController<OrderItemDto>
 {
     #region Attributes
 
     private readonly IOrderItemApiService _orderItemApiService;
-    private readonly IAuthenticationService _authenticationService;
 
     #endregion
 
@@ -67,9 +67,11 @@ public class OrderItemController : BaseApiController
         ILocalizationService localizationService,
         IPictureService pictureService,
         IOrderItemApiService orderItemApiService,
-        IAuthenticationService authenticationService
+        IAuthenticationService authenticationService,
+        IStoreContext storeContext
     ) :
     base(
+        orderItemApiService,
         jsonFieldsSerializer,
         aclService,
         customerService,
@@ -78,11 +80,12 @@ public class OrderItemController : BaseApiController
         discountService,
         customerActivityService,
         localizationService,
-        pictureService
+        pictureService,
+        authenticationService,
+        storeContext
     )
     {
         _orderItemApiService = orderItemApiService;
-        _authenticationService = authenticationService;
     }
 
 

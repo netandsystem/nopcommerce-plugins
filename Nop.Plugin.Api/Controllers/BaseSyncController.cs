@@ -28,9 +28,9 @@ namespace Nop.Plugin.Api.Controllers;
 public abstract class BaseSyncController<TDtoEntity> : BaseApiController where TDtoEntity : BaseSyncDto
 {
     #region Fields
-    private readonly IAuthenticationService _authenticationService;
-    private readonly IBaseSyncService<TDtoEntity> _syncService;
-    private readonly IStoreContext _storeContext;
+    protected readonly IAuthenticationService _authenticationService;
+    protected readonly IBaseSyncService<TDtoEntity> _syncService;
+    protected readonly IStoreContext _storeContext;
     #endregion
 
     #region Ctr
@@ -67,7 +67,7 @@ public abstract class BaseSyncController<TDtoEntity> : BaseApiController where T
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.NotFound)]
     [ProducesResponseType(typeof(string), (int)HttpStatusCode.Unauthorized)]
-    public async Task<IActionResult> SyncData2(Sync2ParametersModel body)
+    public async Task<IActionResult> SyncData3(Sync2ParametersModel body)
     {
         var sellerEntity = await _authenticationService.GetAuthenticatedCustomerAsync();
 
