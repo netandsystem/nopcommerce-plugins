@@ -24,7 +24,7 @@ public class InvoiceDto : BaseSyncDto
     public int CustomerId { get; set; }
 
     [JsonProperty("seller_id")]
-    public int SellerId { get; set; }
+    public int? SellerId { get; set; }
 
     [JsonProperty("customer_name")]
     public string? CustomerName { get; set; }
@@ -32,7 +32,7 @@ public class InvoiceDto : BaseSyncDto
     [JsonProperty("balance")]
     public decimal Balance { get; set; }
 
-    public InvoiceDto(string invoiceNumber, DocumentType documentType, DateTime createdOnUtc, decimal total, int customerId, int SellerId, string? customerName, decimal balance)
+    public InvoiceDto(string invoiceNumber, DocumentType documentType, DateTime createdOnUtc, decimal total, int customerId, int? SellerId, string? customerName, decimal balance)
     {
         InvoiceNumber = invoiceNumber;
         DocumentType = documentType;

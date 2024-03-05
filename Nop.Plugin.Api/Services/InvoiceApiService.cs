@@ -43,8 +43,7 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
         async Task<List<InvoiceDto>> GetSellerItemsAsync()
         {
             var query = from i in _invoiceRepository.Table
-                        join c in _customerRepository.Table on i.CustomerId equals c.Id
-                        where c.SellerId == sellerId
+                        where i.SellerId == sellerId
                         select i.ToDto();
 
             return await query.ToListAsync();
@@ -71,6 +70,7 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
             created_on_ts, number
             customer_name, string
             customer_id, number
+            seller_id, number
             balance, number
         ]
         */
@@ -89,6 +89,7 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
                 p.CreatedOnTs,
                 p.CustomerName,
                 p.CustomerId,
+                p.SellerId,
                 p.Balance
             }
         ).ToList();
