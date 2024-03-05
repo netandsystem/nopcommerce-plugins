@@ -22,7 +22,7 @@ namespace Nop.Plugin.Api.Services;
 
 #nullable enable
 
-public class OrderItemApiService : IOrderItemApiService
+public class OrderItemApiService : BaseSyncService<OrderItemDto>, IOrderItemApiService
 {
     #region Fields
 
@@ -87,6 +87,61 @@ public class OrderItemApiService : IOrderItemApiService
         var itemsToSave = GetItemsCompressed(itemsToInsertOrUpdate);
 
         return new BaseSyncResponse(itemsToSave, idsToDelete);
+    }
+
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+      IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+   )
+    {
+        var GetSellerItemsAsync = async () =>
+        {
+            var allOrders = await _orderApiService.GetLastedUpdatedOrders(null, sellerId);
+
+            var query = from orderItem in _orderItemRepository.Table
+                        join order in allOrders
+                        on orderItem.OrderId equals order.Id
+                        select orderItem.ToDto();
+
+            return await query.ToListAsync();
+        };
+
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetSellerItemsAsync()
+         );
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<OrderItemDto> items)
+    {
+        /*
+            [
+              id,   number
+              deleted,  boolean
+              updated_on_ts,  number
+
+              order_id,  number
+              product_id,  number
+              unit_price_excl_tax,  number
+              unit_price_incl_tax,  number
+              quantity,  number
+            ]
+        */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                false,
+                p.UpdatedOnTs,
+
+                p.OrderId,
+                p.ProductId,
+                p.UnitPriceExclTax,
+                p.UnitPriceInclTax,
+                p.Quantity,
+            }
+        ).ToList();
     }
 
     #endregion

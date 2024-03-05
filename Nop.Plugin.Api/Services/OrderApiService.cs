@@ -37,7 +37,7 @@ namespace Nop.Plugin.Api.Services;
 
 #nullable enable
 
-public class OrderApiService : IOrderApiService
+public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
 {
     #region Fields
 
@@ -654,6 +654,77 @@ public class OrderApiService : IOrderApiService
         return result;
     }
 
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetLastedUpdatedOrders(null, sellerId)
+        );
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<OrderDto> items)
+    {
+        /*
+        [
+          id,   string
+          deleted,  boolean
+          updated_on_ts,  number
+
+          order_manager_guid, string
+          created_on_ts,  number
+
+          order_shipping_excl_tax,  number
+          order_discount,  number
+          custom_values,  json
+      
+          order_status,  string
+          paid_date_ts,  number
+
+          customer_id,  number
+          customer_code: z.string().optional().nullable(),
+          customer_business_name: z.string().optional().nullable(),
+          customer_rif: z.string().optional().nullable(),
+
+          billing_address_1: z.string().optional().nullable(),
+          billing_address_2: z.string().optional().nullable(),
+        ]
+      */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+
+                p.OrderManagerGuid,
+                p.CreatedOnTs,
+
+                p.OrderShippingExclTax,
+                p.OrderDiscount,
+                p.CustomValues is null || p.CustomValues.Count == 0 ? null : GetItemsCompressed(p.CustomValues),
+
+                p.OrderStatus,
+                p.PaidDateTs,
+
+                p.CustomerId,
+                p.Customer?.SystemName,
+                p.Customer?.Attributes?.GetValueOrDefault("company"),
+                p.Customer?.Attributes?.GetValueOrDefault("rif"),
+
+                p.BillingAddress.Address1,
+                p.BillingAddress.Address2,
+            }
+        ).ToList();
+    }
+
+    public List<object> GetItemsCompressed(Dictionary<string, object> item)
+    {
+        return item.Select(p => p.Value).ToList();
+    }
 
     #endregion
 

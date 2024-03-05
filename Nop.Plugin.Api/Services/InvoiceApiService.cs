@@ -1,0 +1,108 @@
+﻿using Nop.Core.Domain.Customers;
+using Nop.Core.Domain.Orders;
+using Nop.Data;
+using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.DTOs.Orders;
+using Nop.Plugin.Api.MappingExtensions;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace Nop.Plugin.Api.Services;
+
+#nullable enable
+
+public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
+{
+    #region Fields
+
+    private readonly IRepository<Invoice> _invoiceRepository;
+    private readonly IRepository<Customer> _customerRepository;
+
+    #endregion
+
+    #region Ctor
+
+    public InvoiceApiService(
+        IRepository<Invoice> invoiceRepository,
+        IRepository<Customer> customerRepository
+    )
+    {
+        _invoiceRepository = invoiceRepository;
+        _customerRepository = customerRepository;
+    }
+
+    #endregion
+
+    #region Methods
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        async Task<List<InvoiceDto>> GetSellerItemsAsync()
+        {
+            var query = from i in _invoiceRepository.Table
+                        join c in _customerRepository.Table on i.CustomerId equals c.Id
+                        where c.SellerId == sellerId
+                        select i.ToDto();
+
+            return await query.ToListAsync();
+        }
+
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            GetSellerItemsAsync
+         );
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<InvoiceDto> items)
+    {
+        /*
+        [
+            id, number
+            deleted,  boolean
+            updated_on_ts,  number
+      
+            invoice_number,  string
+            document_type, string
+            total, number
+            created_on_ts, number
+            customer_name, string
+            customer_id, number
+            balance, number
+        ]
+        */
+
+
+        return items.Select(p =>
+            new List<object?>()
+            {
+                p.Id,
+                false,
+                p.UpdatedOnTs,
+
+                p.InvoiceNumber,
+                p.DocumentType.ToString(),
+                p.Total,
+                p.CreatedOnTs,
+                p.CustomerName,
+                p.CustomerId,
+                p.Balance
+            }
+        ).ToList();
+    }
+
+
+    #endregion
+
+    #region Private Methods
+
+
+    #endregion
+
+    #region Private Classes
+
+    #endregion
+}

@@ -14,7 +14,7 @@ namespace Nop.Plugin.Api.Services;
 
 #nullable enable
 
-public interface ICustomerApiService
+public interface ICustomerApiService : IBaseSyncService<CustomerDto>
 {
     Task<int> GetCustomersCountAsync();
 

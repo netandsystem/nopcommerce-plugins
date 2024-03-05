@@ -57,7 +57,7 @@ public abstract class BaseSyncService<TDtoEntity> : IBaseSyncService<TDtoEntity>
             itemsToInsertOrUpdate = await BeforeCompress(itemsToInsertOrUpdate);
         }
 
-        var itemsToSave = GetItemsCompressed(itemsToInsertOrUpdate);
+        var itemsToSave = GetItemsCompressed3(itemsToInsertOrUpdate);
 
         return new BaseSyncResponse(itemsToSave, idsToDelete);
     }
@@ -66,5 +66,5 @@ public abstract class BaseSyncService<TDtoEntity> : IBaseSyncService<TDtoEntity>
         IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
     );
 
-    public abstract List<List<object?>> GetItemsCompressed(IList<TDtoEntity> items);
+    public abstract List<List<object?>> GetItemsCompressed3(IList<TDtoEntity> items);
 }

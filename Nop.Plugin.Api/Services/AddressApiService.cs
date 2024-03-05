@@ -18,7 +18,7 @@ using Nop.Services.Directory;
 
 namespace Nop.Plugin.Api.Services;
 
-public class AddressApiService : IAddressApiService
+public class AddressApiService : BaseSyncService<AddressDto>, IAddressApiService
 {
     #region Fields
 
@@ -166,6 +166,31 @@ public class AddressApiService : IAddressApiService
         return new BaseSyncResponse(itemsToSave, idsToDelete);
     }
 
+    private async Task<List<AddressDto>> GetSellerItemsAsync(int sellerId)
+    {
+        var allCustomers = await _customerApiService.GetLastestUpdatedCustomersAsync(null, sellerId);
+
+        var customersIds = allCustomers.Select(x => x.Id).ToList();
+
+        var query = from address in _addressRepository.Table
+                    join cam in _customerAddressMappingRepository.Table on address.Id equals cam.AddressId
+                    where customersIds.Contains(cam.CustomerId)
+                    select address.ToDto();
+
+        return await query.ToListAsync();
+    }
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetSellerItemsAsync(sellerId)
+        );
+    }
+
     #endregion
 
     #region Private Methods
@@ -196,6 +221,58 @@ public class AddressApiService : IAddressApiService
         ).ToList();
     }
 
+    public List<List<object?>> GetItemsCompressed(IList<AddressDto> items)
+    {
+        /*
+            [
+              id, number
+              deleted,  boolean
+              updated_on_ts,  number
+      
+              address1,  string
+              address2,  string
+            ]
+        */
+
+        return items.Select(p =>
+            new List<object?>()
+            {
+                p.Id,
+                false,
+                p.UpdatedOnTs,
+
+                p.Address1,
+                p.Address2,
+            }
+        ).ToList();
+    }
+
+
+    public override List<List<object?>> GetItemsCompressed3(IList<AddressDto> items)
+    {
+        /*
+            [
+              id, number
+              deleted,  boolean
+              updated_on_ts,  number
+      
+              address1,  string
+              address2,  string
+            ]
+        */
+
+        return items.Select(p =>
+            new List<object?>()
+            {
+                p.Id,
+                false,
+                p.UpdatedOnTs,
+
+                p.Address1,
+                p.Address2,
+            }
+        ).ToList();
+    }
 
     #endregion
 
