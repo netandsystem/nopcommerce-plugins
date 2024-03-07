@@ -5,14 +5,10 @@ using Newtonsoft.Json;
 
 namespace Nop.Plugin.Api.DTOs.Orders;
 
-#nullable enable
-
 [JsonObject(Title = "invoice")]
 public class InvoiceDto : BaseSyncDto
 {
-
-    [JsonProperty("invoice_number")]
-    public string InvoiceNumber { get; set; }
+#nullable enable
 
     [JsonProperty("document_type")]
     public DocumentType DocumentType { get; set; }
@@ -32,15 +28,9 @@ public class InvoiceDto : BaseSyncDto
     [JsonProperty("balance")]
     public decimal Balance { get; set; }
 
-    public InvoiceDto(string invoiceNumber, DocumentType documentType, DateTime createdOnUtc, decimal total, int customerId, int? SellerId, string? customerName, decimal balance)
-    {
-        InvoiceNumber = invoiceNumber;
-        DocumentType = documentType;
-        CreatedOnUtc = createdOnUtc;
-        Total = total;
-        CustomerId = customerId;
-        this.SellerId = SellerId;
-        CustomerName = customerName;
-        Balance = balance;
-    }
+    [JsonProperty("tax_printer_number")]
+    public string? TaxPrinterNumber { get; set; }
+
+    [JsonProperty("ext_id")]
+    public string? ExtId { get; set; }
 }

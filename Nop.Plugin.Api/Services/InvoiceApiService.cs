@@ -64,7 +64,7 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
             deleted,  boolean
             updated_on_ts,  number
       
-            invoice_number,  string
+            ext_id,  string
             document_type, string
             total, number
             created_on_ts, number
@@ -72,6 +72,7 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
             customer_id, number
             seller_id, number
             balance, number
+            tax_printer_number, string
         ]
         */
 
@@ -83,14 +84,15 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
                 false,
                 p.UpdatedOnTs,
 
-                p.InvoiceNumber,
+                p.ExtId,
                 p.DocumentType.ToString(),
                 p.Total,
                 p.CreatedOnTs,
                 p.CustomerName,
                 p.CustomerId,
                 p.SellerId,
-                p.Balance
+                p.Balance,
+                p.TaxPrinterNumber
             }
         ).ToList();
     }

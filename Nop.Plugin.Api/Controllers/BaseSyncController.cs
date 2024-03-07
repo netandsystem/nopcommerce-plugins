@@ -61,7 +61,7 @@ public abstract class BaseSyncController<TDtoEntity> : BaseApiController where T
     /// <param name="fields">Fields from the customer you want your json to contain</param>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
-    [HttpPost("syncdata2")]
+    [HttpPost("syncdata3")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
