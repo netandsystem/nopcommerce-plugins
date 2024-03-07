@@ -33,6 +33,7 @@ using Nop.Plugin.Api.DTO.Products;
 using Nop.Plugin.Api.DTO.ShoppingCarts;
 using Nop.Plugin.Api.DTO.SpecificationAttributes;
 using Nop.Plugin.Api.DTO.Stores;
+using Nop.Plugin.Api.DTOs.Orders;
 using Nop.Plugin.Api.DTOs.ShippingMethod;
 using Nop.Plugin.Api.DTOs.StateProvinces;
 using Nop.Plugin.Api.DTOs.Statistics;
@@ -101,6 +102,7 @@ namespace Nop.Plugin.Api.AutoMapper
 
             CreateMap<ShippingMethod, ShippingMethodDto>();
             CreateMap<SellerStatistics, SellerStatisticsDto>();
+            CreateMap<Invoice, InvoiceDto>();
         }
 
         public int Order => 0;

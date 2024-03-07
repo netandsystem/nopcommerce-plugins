@@ -1,8 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nop.Core;
 using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Plugin.Api.DTO.Errors;
 using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.DTOs.Statistics;
 using Nop.Plugin.Api.Helpers;
 using Nop.Plugin.Api.JSON.Serializers;
 using Nop.Plugin.Api.Models.Base;
@@ -26,20 +28,16 @@ namespace Nop.Plugin.Api.Controllers;
 
 [Route("api/seller-statistics")]
 
-public class SellerStatisticsController : BaseApiController
+public class SellerStatisticsController : BaseSyncController<SellerStatisticsDto>
 {
     #region Fields
-
-    private readonly IAuthenticationService _authenticationService;
     private readonly ISellerStatisticsApiService _sellerStatisticsApiService;
-
 
     #endregion
 
     #region Ctr
 
     public SellerStatisticsController(
-        ICustomerApiService customerApiService,
         IJsonFieldsSerializer jsonFieldsSerializer,
         IAclService aclService,
         ICustomerService customerService,
@@ -50,13 +48,12 @@ public class SellerStatisticsController : BaseApiController
         ILocalizationService localizationService,
         IPictureService pictureService,
         IAuthenticationService authenticationService,
-        ISellerStatisticsApiService sellerStatisticsApiService
-
+        ISellerStatisticsApiService sellerStatisticsApiService,
+        IStoreContext storeContext
     ) :
-        base(jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService, customerActivityService,
-             localizationService, pictureService)
+        base(sellerStatisticsApiService, jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService, customerActivityService,
+             localizationService, pictureService, authenticationService, storeContext)
     {
-        _authenticationService = authenticationService;
         _sellerStatisticsApiService = sellerStatisticsApiService;
     }
 

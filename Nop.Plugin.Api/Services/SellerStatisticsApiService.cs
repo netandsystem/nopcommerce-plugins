@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace Nop.Plugin.Api.Services;
 
 #nullable enable
-public class SellerStatisticsApiService : ISellerStatisticsApiService
+public class SellerStatisticsApiService : BaseSyncService<SellerStatisticsDto>, ISellerStatisticsApiService
 {
     #region Fields
 
@@ -80,6 +80,58 @@ public class SellerStatisticsApiService : ISellerStatisticsApiService
              updated_on_ts,  number
      
              seller_id, number
+            month, number
+            total_invoiced, number
+            total_collected, number
+            activations, number
+          ]
+          */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.SellerId,
+                p.Month,
+                p.TotalInvoiced,
+                p.TotalCollected,
+                p.Activations
+            }
+        ).ToList();
+    }
+
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        async Task<List<SellerStatisticsDto>> GetSellerItemsAsync()
+        {
+            var selectedItemsQuery = from s in _sellerStatisticsRepository.Table
+                                     where s.SellerId == sellerId
+                                     select s.ToDto();
+
+            return await selectedItemsQuery.ToListAsync();
+        }
+
+
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetSellerItemsAsync()
+         );
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<SellerStatisticsDto> items)
+    {
+        /**
+          [
+            id, number
+            deleted,  boolean
+            updated_on_ts,  number
+     
+            seller_id, number
             month, number
             total_invoiced, number
             total_collected, number

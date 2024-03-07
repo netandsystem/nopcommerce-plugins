@@ -14,7 +14,7 @@ using Nop.Plugin.Api.DTOs.Base;
 
 namespace Nop.Plugin.Api.Services;
 
-public class CategoryApiService : ICategoryApiService
+public class CategoryApiService : BaseSyncService<CategoryDto>, ICategoryApiService
 {
     private readonly IRepository<Category> _categoryRepository;
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
@@ -161,6 +161,17 @@ public class CategoryApiService : ICategoryApiService
         return new BaseSyncResponse(itemsCompressed);
     }
 
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetLastestUpdatedCategoriesAsync(null)
+         );
+    }
+
     public List<List<object?>> GetItemsCompressed(IList<CategoryDto> items)
     {
         /*
@@ -186,4 +197,31 @@ public class CategoryApiService : ICategoryApiService
             }
         ).ToList();
     }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<CategoryDto> items)
+    {
+        /*
+          [
+            id, number
+            deleted,  boolean
+            updated_on_ts,  number
+
+            name, string
+            parent_category_id, number
+            published, boolean
+          ]
+        */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.Name,
+                p.ParentCategoryId,
+                p.Published
+            }
+        ).ToList();
+    }
+
 }

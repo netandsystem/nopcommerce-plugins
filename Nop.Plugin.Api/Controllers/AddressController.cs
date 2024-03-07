@@ -39,6 +39,7 @@ using Nop.Plugin.Api.Authorization.Policies;
 using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Models.Base;
 using Nop.Services.Authentication;
+using Nop.Plugin.Api.DTO;
 
 namespace Nop.Plugin.Api.Controllers;
 
@@ -46,12 +47,11 @@ namespace Nop.Plugin.Api.Controllers;
 
 [Route("api/addresses")]
 
-public class AddressController : BaseApiController
+public class AddressController : BaseSyncController<AddressDto>
 {
     #region Attributes
 
     private readonly IAddressApiService _addressApiService;
-    private readonly IAuthenticationService _authenticationService;
 
     #endregion
 
@@ -67,9 +67,11 @@ public class AddressController : BaseApiController
         ILocalizationService localizationService,
         IPictureService pictureService,
         IAddressApiService addressApiService,
-        IAuthenticationService authenticationService
+        IAuthenticationService authenticationService,
+        IStoreContext storeContext
     ) :
     base(
+        addressApiService,
         jsonFieldsSerializer,
         aclService,
         customerService,
@@ -78,11 +80,12 @@ public class AddressController : BaseApiController
         discountService,
         customerActivityService,
         localizationService,
-        pictureService
+        pictureService,
+        authenticationService,
+        storeContext
     )
     {
         _addressApiService = addressApiService;
-        _authenticationService = authenticationService;
     }
 
 
