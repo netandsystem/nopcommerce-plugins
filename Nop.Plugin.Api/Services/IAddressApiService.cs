@@ -9,7 +9,7 @@ using Nop.Plugin.Api.DTOs.StateProvinces;
 
 namespace Nop.Plugin.Api.Services;
 
-public interface IAddressApiService
+public interface IAddressApiService : IBaseSyncService<AddressDto>
 {
     Task<AddressDto> GetCustomerAddressAsync(int customerId, int addressId);
     Task<IList<CountryDto>> GetAllCountriesAsync(bool mustAllowBilling = false, bool mustAllowShipping = false);

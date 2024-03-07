@@ -40,16 +40,8 @@ using Nop.Services.Security;
 using Nop.Services.Shipping;
 using Nop.Services.Stores;
 using Nop.Services.Tax;
-using Nop.Plugin.Api.Authorization.Attributes;
-using Nop.Plugin.Api.DTO.ShoppingCarts;
-using Nop.Plugin.Api.DTOs.ShoppingCarts;
-using DocumentFormat.OpenXml.Spreadsheet;
-using DocumentFormat.OpenXml.Wordprocessing;
-using FluentMigrator.Runner.Processors.Firebird;
-using Nop.Core.Domain.Stores;
 using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
-using Nop.Core.Domain.News;
 using Nop.Plugin.Api.Models.Base;
 using Nop.Plugin.Api.DTOs.Base;
 
@@ -58,7 +50,7 @@ namespace Nop.Plugin.Api.Controllers;
 #nullable enable
 
 [Route("api/orders")]
-public class OrdersController : BaseApiController
+public class OrdersController : BaseSyncController<OrderDto>
 {
     #region Fields
 
@@ -72,11 +64,9 @@ public class OrdersController : BaseApiController
     private readonly IPaymentService _paymentService;
     private readonly IPdfService _pdfService;
     private readonly IPermissionService _permissionService;
-    private readonly IAuthenticationService _authenticationService;
     private readonly IProductService _productService;
     private readonly IShippingService _shippingService;
     private readonly IShoppingCartService _shoppingCartService;
-    private readonly IStoreContext _storeContext;
     private readonly ITaxPluginManager _taxPluginManager;
     private readonly IShoppingCartItemApiService _shoppingCartItemApiService;
     private readonly ICustomerApiService _customerApiService;
@@ -118,22 +108,20 @@ public class OrdersController : BaseApiController
         ICustomerApiService customerApiService,
         OrderSettings orderSettings
         )
-        : base(jsonFieldsSerializer, aclService, customerService, storeMappingService,
-               storeService, discountService, customerActivityService, localizationService, pictureService)
+        : base(orderApiService, jsonFieldsSerializer, aclService, customerService, storeMappingService,
+               storeService, discountService, customerActivityService, localizationService, pictureService, authenticationService, storeContext)
     {
         _orderApiService = orderApiService;
         _orderProcessingService = orderProcessingService;
         _orderService = orderService;
         _shoppingCartService = shoppingCartService;
         _genericAttributeService = genericAttributeService;
-        _storeContext = storeContext;
         _shippingService = shippingService;
         _productService = productService;
         _productAttributeConverter = productAttributeConverter;
         _paymentService = paymentService;
         _pdfService = pdfService;
         _permissionService = permissionService;
-        _authenticationService = authenticationService;
         _taxPluginManager = taxPluginManager;
         _shoppingCartItemApiService = shoppingCartItemApiService;
         _customerApiService = customerApiService;

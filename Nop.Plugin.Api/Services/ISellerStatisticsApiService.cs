@@ -10,7 +10,7 @@ namespace Nop.Plugin.Api.Services;
 
 #nullable enable
 
-public interface ISellerStatisticsApiService
+public interface ISellerStatisticsApiService : IBaseSyncService<SellerStatisticsDto>
 {
     Task<BaseSyncResponse> GetLastestUpdatedItems2Async(
         IList<int>? idsInDb, DateTime? lastUpdateUtc, int sellerId

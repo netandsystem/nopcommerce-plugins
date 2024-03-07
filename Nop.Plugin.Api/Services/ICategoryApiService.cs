@@ -9,7 +9,7 @@ using Nop.Plugin.Api.Infrastructure;
 
 namespace Nop.Plugin.Api.Services;
 
-public interface ICategoryApiService
+public interface ICategoryApiService : IBaseSyncService<CategoryDto>
 {
     Category GetCategoryById(int categoryId);
 

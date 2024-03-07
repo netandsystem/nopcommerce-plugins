@@ -39,17 +39,16 @@ using static Nop.Services.ExportImport.ImportManager;
 using Newtonsoft.Json;
 using Nop.Plugin.Api.DTOs.Base;
 using Nop.Plugin.Api.Models.Base;
+using Nop.Services.Authentication;
 
 namespace Nop.Plugin.Api.Controllers;
 
 [Route("api/products")]
-public class ProductsController : BaseApiController
+public class ProductsController : BaseSyncController<ProductDto>
 {
     #region Attributes
 
     private readonly IProductService _productService;
-    private readonly IStoreContext _storeContext;
-
     private readonly IDTOHelper _dtoHelper;
     private readonly IProductApiService _productApiService;
     private readonly IOrderReportService _orderReportService;
@@ -60,7 +59,6 @@ public class ProductsController : BaseApiController
     public ProductsController(
         IProductService productService,
         IStoreContext storeContext,
-
         IJsonFieldsSerializer jsonFieldsSerializer,
         IAclService aclService,
         ICustomerService customerService,
@@ -72,9 +70,11 @@ public class ProductsController : BaseApiController
         IPictureService pictureService,
         IProductApiService productApiService,
         IDTOHelper dtoHelper,
-        IOrderReportService orderReportService
+        IOrderReportService orderReportService,
+        IAuthenticationService authenticationService
     ) :
     base(
+        productApiService,
         jsonFieldsSerializer,
         aclService,
         customerService,
@@ -83,12 +83,12 @@ public class ProductsController : BaseApiController
         discountService,
         customerActivityService,
         localizationService,
-        pictureService
+        pictureService,
+        authenticationService,
+        storeContext
     )
     {
         _productService = productService;
-        _storeContext = storeContext;
-
         _productApiService = productApiService;
         _dtoHelper = dtoHelper;
         _orderReportService = orderReportService;
