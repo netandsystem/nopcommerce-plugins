@@ -33,7 +33,7 @@ using Nop.Plugin.Api.DTO;
 
 namespace Nop.Plugin.Api.Services;
 
-public class CustomerApiService : ICustomerApiService
+public class CustomerApiService : BaseSyncService<CustomerDto>, ICustomerApiService
 {
     #region Fields
 
@@ -258,6 +258,18 @@ public class CustomerApiService : ICustomerApiService
         return customersDto;
     }
 
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetLastestUpdatedCustomersAsync(null, sellerId),
+            (itemsToInsertOrUpdate) => JoinCustomerDtosWithCustomerAttributesAsync(itemsToInsertOrUpdate)
+         );
+    }
+
     public List<List<object?>> GetItemsCompressed(IList<CustomerDto> items)
     {
         /**
@@ -287,6 +299,38 @@ public class CustomerApiService : ICustomerApiService
                 p.Attributes?.GetValueOrDefault("company"),
                 p.Attributes?.GetValueOrDefault("rif"),
                 p.Attributes?.GetValueOrDefault("phone"),
+                p.Email,
+                p.SellerId,
+                p.BillingAddressId,
+                p.Balance
+            }
+        ).ToList();
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<CustomerDto> items)
+    {
+        /**
+          [
+             id, number
+             deleted,  boolean
+             updated_on_ts,  number
+     
+             system_name,  string
+
+             email,  string
+             seller_id,  number
+             billing_address_id,  number
+
+             balance, number
+          ]
+          */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.SystemName,
                 p.Email,
                 p.SellerId,
                 p.BillingAddressId,

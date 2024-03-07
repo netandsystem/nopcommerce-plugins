@@ -37,7 +37,7 @@ namespace Nop.Plugin.Api.Services;
 
 #nullable enable
 
-public class OrderApiService : IOrderApiService
+public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
 {
     #region Fields
 
@@ -654,6 +654,84 @@ public class OrderApiService : IOrderApiService
         return result;
     }
 
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+    )
+    {
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetLastedUpdatedOrders(null, sellerId)
+        );
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<OrderDto> items)
+    {
+        /*
+        [
+            id,   string
+            deleted,  boolean
+            updated_on_ts,  number
+
+            order_manager_guid, string
+            created_on_ts,  number
+
+            order_shipping_excl_tax,  number
+            order_discount,  number
+
+            observations_days, string
+            observations_discount, string
+            observations_payment_modality, string
+            observations_special_observation, string
+            observations_transport_company, string
+            observations_document_type, string
+            observations_invoice_number,  string
+      
+            order_status,  string
+
+            customer_id,  number
+            customer_code: z.string().optional().nullable(),
+            customer_business_name: z.string().optional().nullable(),
+            customer_rif: z.string().optional().nullable(),
+
+            billing_address_1: z.string().optional().nullable(),
+            billing_address_2: z.string().optional().nullable(),
+        ]
+      */
+
+        return items.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+
+                p.OrderManagerGuid,
+                p.CreatedOnTs,
+
+                p.OrderShippingExclTax,
+                p.OrderDiscount,
+
+                p.CustomValues?.GetValueOrDefault("days"),
+                p.CustomValues?.GetValueOrDefault("discount"),
+                p.CustomValues?.GetValueOrDefault("payment_modality"),
+                p.CustomValues?.GetValueOrDefault("special_observation"),
+                p.CustomValues?.GetValueOrDefault("transport_company"),
+                p.CustomValues?.GetValueOrDefault("document_type"),
+                p.CustomValues?.GetValueOrDefault("invoice_number"),
+
+                p.OrderStatus,
+
+                p.CustomerId,
+                p.Customer?.SystemName,
+                p.Customer?.Attributes?.GetValueOrDefault("company"),
+                p.Customer?.Attributes?.GetValueOrDefault("rif"),
+
+                p.BillingAddress.Address1,
+                p.BillingAddress.Address2,
+            }
+        ).ToList();
+    }
 
     #endregion
 

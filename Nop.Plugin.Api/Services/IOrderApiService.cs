@@ -13,7 +13,7 @@ using Nop.Services.Orders;
 
 namespace Nop.Plugin.Api.Services;
 
-public interface IOrderApiService
+public interface IOrderApiService : IBaseSyncService<OrderDto>
 {
     Task<List<OrderDto>> GetOrders(
         int? customerId,
