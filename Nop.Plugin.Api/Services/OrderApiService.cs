@@ -670,27 +670,33 @@ public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
     {
         /*
         [
-          id,   string
-          deleted,  boolean
-          updated_on_ts,  number
+            id,   string
+            deleted,  boolean
+            updated_on_ts,  number
 
-          order_manager_guid, string
-          created_on_ts,  number
+            order_manager_guid, string
+            created_on_ts,  number
 
-          order_shipping_excl_tax,  number
-          order_discount,  number
-          custom_values,  json
+            order_shipping_excl_tax,  number
+            order_discount,  number
+
+            observations_days, string
+            observations_discount, string
+            observations_payment_modality, string
+            observations_special_observation, string
+            observations_transport_company, string
+            observations_document_type, string
+            observations_invoice_number,  string
       
-          order_status,  string
-          paid_date_ts,  number
+            order_status,  string
 
-          customer_id,  number
-          customer_code: z.string().optional().nullable(),
-          customer_business_name: z.string().optional().nullable(),
-          customer_rif: z.string().optional().nullable(),
+            customer_id,  number
+            customer_code: z.string().optional().nullable(),
+            customer_business_name: z.string().optional().nullable(),
+            customer_rif: z.string().optional().nullable(),
 
-          billing_address_1: z.string().optional().nullable(),
-          billing_address_2: z.string().optional().nullable(),
+            billing_address_1: z.string().optional().nullable(),
+            billing_address_2: z.string().optional().nullable(),
         ]
       */
 
@@ -705,10 +711,16 @@ public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
 
                 p.OrderShippingExclTax,
                 p.OrderDiscount,
-                p.CustomValues is null || p.CustomValues.Count == 0 ? null : GetItemsCompressed(p.CustomValues),
+
+                p.CustomValues?.GetValueOrDefault("days"),
+                p.CustomValues?.GetValueOrDefault("discount"),
+                p.CustomValues?.GetValueOrDefault("payment_modality"),
+                p.CustomValues?.GetValueOrDefault("special_observation"),
+                p.CustomValues?.GetValueOrDefault("transport_company"),
+                p.CustomValues?.GetValueOrDefault("document_type"),
+                p.CustomValues?.GetValueOrDefault("invoice_number"),
 
                 p.OrderStatus,
-                p.PaidDateTs,
 
                 p.CustomerId,
                 p.Customer?.SystemName,
@@ -719,11 +731,6 @@ public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
                 p.BillingAddress.Address2,
             }
         ).ToList();
-    }
-
-    public List<object> GetItemsCompressed(Dictionary<string, object> item)
-    {
-        return item.Select(p => p.Value).ToList();
     }
 
     #endregion

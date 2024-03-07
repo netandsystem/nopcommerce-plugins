@@ -1,22 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Nop.Core.Caching;
-using Nop.Core.Domain.Common;
-using Nop.Core.Domain.Customers;
-using Nop.Core.Domain.Directory;
-using Nop.Core.Domain.Orders;
+﻿using Nop.Core.Domain.Orders;
 using Nop.Data;
-using Nop.Plugin.Api.DTO;
-using Nop.Plugin.Api.DTO.Customers;
 using Nop.Plugin.Api.DTO.OrderItems;
 using Nop.Plugin.Api.DTOs.Base;
-using Nop.Plugin.Api.DTOs.StateProvinces;
 using Nop.Plugin.Api.MappingExtensions;
-using Nop.Services.Customers;
-using Nop.Services.Directory;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Nop.Plugin.Api.Services;
 
@@ -94,7 +84,7 @@ public class OrderItemApiService : BaseSyncService<OrderItemDto>, IOrderItemApiS
       IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
    )
     {
-        var GetSellerItemsAsync = async () =>
+        async Task<List<OrderItemDto>> GetSellerItemsAsync()
         {
             var allOrders = await _orderApiService.GetLastedUpdatedOrders(null, sellerId);
 
@@ -104,12 +94,12 @@ public class OrderItemApiService : BaseSyncService<OrderItemDto>, IOrderItemApiS
                         select orderItem.ToDto();
 
             return await query.ToListAsync();
-        };
+        }
 
         return await GetLastestUpdatedItems3Async(
             idsInDb,
             lastUpdateTs,
-            () => GetSellerItemsAsync()
+            GetSellerItemsAsync
          );
     }
 
