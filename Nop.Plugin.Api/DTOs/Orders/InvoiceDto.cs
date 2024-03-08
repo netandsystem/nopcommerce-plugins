@@ -11,7 +11,7 @@ public class InvoiceDto : BaseSyncDto
 #nullable enable
 
     [JsonProperty("document_type")]
-    public DocumentType DocumentType { get; set; }
+    public InvoiceType DocumentType { get; set; }
 
     [JsonProperty("total")]
     public decimal Total { get; set; }
