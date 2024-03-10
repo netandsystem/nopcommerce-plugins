@@ -19,6 +19,9 @@ public class InvoiceDto : BaseSyncDto
     [JsonProperty("customer_id")]
     public int CustomerId { get; set; }
 
+    [JsonProperty("customer_ext_id")]
+    public string? CustomerExtId { get; set; }
+
     [JsonProperty("seller_id")]
     public int? SellerId { get; set; }
 
