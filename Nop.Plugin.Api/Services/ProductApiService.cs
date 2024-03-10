@@ -32,7 +32,7 @@ using Nop.Plugin.Api.DTOs.Base;
 
 namespace Nop.Plugin.Api.Services;
 
-public class ProductApiService : IProductApiService
+public class ProductApiService : BaseSyncService<ProductDto>, IProductApiService
 {
     #region Fields
     private readonly IRepository<ProductCategory> _productCategoryMappingRepository;
@@ -495,6 +495,63 @@ public class ProductApiService : IProductApiService
                 p.StockQuantity,
                 p.Published,
                 p.CategoryIds?.FirstOrDefault()
+            }
+        ).ToList();
+    }
+
+
+    public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
+      IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
+   )
+    {
+        var GetSellerItemsAsync = async () =>
+        {
+            var products = await GetLastestUpdatedProducts(null);
+
+            var productsWithPictures = await JoinProductsAndPictures2Async(products);
+
+            return productsWithPictures;
+        };
+
+        return await GetLastestUpdatedItems3Async(
+            idsInDb,
+            lastUpdateTs,
+            () => GetSellerItemsAsync()
+         );
+    }
+
+    public override List<List<object?>> GetItemsCompressed3(IList<ProductDto> products)
+    {
+        /*
+           [
+             id,
+             deleted,
+             updated_on_ts,
+
+             name,
+             price,
+             sku,
+             short_description,
+             images,
+             is_tax_exempt,
+             stock_quantity,
+             published,
+           ]
+        */
+
+        return products.Select(p =>
+            new List<object?>() {
+                p.Id,
+                p.Deleted,
+                p.UpdatedOnTs,
+                p.Name,
+                p.Price,
+                p.Sku,
+                p.ShortDescription,
+                p.Images?.FirstOrDefault(),
+                p.IsTaxExempt,
+                p.StockQuantity,
+                p.Published,
             }
         ).ToList();
     }

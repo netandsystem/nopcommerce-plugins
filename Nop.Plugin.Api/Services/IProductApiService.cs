@@ -12,7 +12,7 @@ using static Nop.Services.ExportImport.ImportManager;
 
 namespace Nop.Plugin.Api.Services;
 
-public interface IProductApiService
+public interface IProductApiService : IBaseSyncService<ProductDto>
 {
     IList<Product> GetProducts(
         IList<int> ids = null,
