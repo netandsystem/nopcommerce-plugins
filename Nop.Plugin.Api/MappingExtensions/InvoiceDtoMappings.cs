@@ -8,8 +8,12 @@ namespace Nop.Plugin.Api.MappingExtensions;
 
 public static class InvoiceDtoMappings
 {
-    public static InvoiceDto ToDto(this Invoice item)
+    public static InvoiceDto ToDto(this Invoice item, string customerExtId)
     {
-        return item.MapTo<Invoice, InvoiceDto>();
+        var dtoItem = item.MapTo<Invoice, InvoiceDto>();
+
+        dtoItem.CustomerExtId = customerExtId;
+
+        return dtoItem;
     }
 }
