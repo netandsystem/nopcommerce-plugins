@@ -1,4 +1,5 @@
-﻿using Nop.Core.Domain.Customers;
+﻿using Nop.Core.Domain.Common;
+using Nop.Core.Domain.Customers;
 using Nop.Core.Domain.Orders;
 using Nop.Data;
 using Nop.Plugin.Api.DTOs.Base;
@@ -6,6 +7,7 @@ using Nop.Plugin.Api.DTOs.Orders;
 using Nop.Plugin.Api.MappingExtensions;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Threading.Tasks;
 
 namespace Nop.Plugin.Api.Services;
@@ -18,6 +20,7 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
 
     private readonly IRepository<Invoice> _invoiceRepository;
     private readonly IRepository<Customer> _customerRepository;
+    private readonly IRepository<GenericAttribute> _genericAttributeRepository;
 
     #endregion
 
@@ -25,27 +28,39 @@ public class InvoiceApiService : BaseSyncService<InvoiceDto>, IInvoiceApiService
 
     public InvoiceApiService(
         IRepository<Invoice> invoiceRepository,
-        IRepository<Customer> customerRepository
+        IRepository<Customer> customerRepository,
+        IRepository<GenericAttribute> genericAttributeRepository
     )
     {
         _invoiceRepository = invoiceRepository;
         _customerRepository = customerRepository;
+        _genericAttributeRepository = genericAttributeRepository;
     }
 
     #endregion
 
     #region Methods
+    private string? GetCustomerName(IList<GenericAttribute> attributesList)
+    {
+        return attributesList.FirstOrDefault(x => x.KeyGroup == "Customer" && x.Key == "Company")?.Value;
+    }
 
     public override async Task<BaseSyncResponse> GetLastestUpdatedItems3Async(
        IList<int>? idsInDb, long? lastUpdateTs, int sellerId, int storeId
     )
     {
+
+
         async Task<List<InvoiceDto>> GetSellerItemsAsync()
         {
             var query = from invoice in _invoiceRepository.Table
-                        join customer in _customerRepository.Table on invoice.CustomerId equals customer.Id
+                        join customer in _customerRepository.Table
+                            on invoice.CustomerId equals customer.Id
+                        join attribute in _genericAttributeRepository.Table
+                            on customer.Id equals attribute.EntityId
+                            into attributesList
                         where invoice.SellerId == sellerId
-                        select invoice.ToDto(customer.SystemName);
+                        select invoice.ToDto(customer.SystemName, GetCustomerName(attributesList.ToList()));
 
             return await query.ToListAsync();
         }
