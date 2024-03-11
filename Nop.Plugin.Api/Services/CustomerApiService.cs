@@ -285,8 +285,6 @@ public class CustomerApiService : BaseSyncService<CustomerDto>, ICustomerApiServ
              email,  string
              seller_id,  number
              billing_address_id,  number
-
-             balance, number
           ]
           */
 
@@ -302,7 +300,6 @@ public class CustomerApiService : BaseSyncService<CustomerDto>, ICustomerApiServ
                 p.Email,
                 p.SellerId,
                 p.BillingAddressId,
-                p.Balance
             }
         ).ToList();
     }
