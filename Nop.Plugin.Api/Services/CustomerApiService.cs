@@ -313,11 +313,12 @@ public class CustomerApiService : BaseSyncService<CustomerDto>, ICustomerApiServ
              updated_on_ts,  number
      
              system_name,  string
-
+             business_name,  string
+             rif,  string
+             phone,  string
              email,  string
              seller_id,  number
              billing_address_id,  number
-
              balance, number
           ]
           */
@@ -328,6 +329,9 @@ public class CustomerApiService : BaseSyncService<CustomerDto>, ICustomerApiServ
                 p.Deleted,
                 p.UpdatedOnTs,
                 p.SystemName,
+                p.Attributes?.GetValueOrDefault("company"),
+                p.Attributes?.GetValueOrDefault("rif"),
+                p.Attributes?.GetValueOrDefault("phone"),
                 p.Email,
                 p.SellerId,
                 p.BillingAddressId,
