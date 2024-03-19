@@ -544,7 +544,7 @@ public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
                 p.Customer?.Attributes?.GetValueOrDefault("rif"),
 
                 p.BillingAddress.Address1,
-                p.BillingAddress.Address2,
+                p.BillingAddress.Address2 ?? "",
             }
         ).ToList();
     }
@@ -728,7 +728,7 @@ public class OrderApiService : BaseSyncService<OrderDto>, IOrderApiService
                 p.Customer?.Attributes?.GetValueOrDefault("rif"),
 
                 p.BillingAddress.Address1,
-                p.BillingAddress.Address2,
+                p.BillingAddress.Address2  ?? "",
             }
         ).ToList();
     }
