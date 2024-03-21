@@ -1,62 +1,43 @@
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Linq;
-using Nop.Core.Domain.Catalog;
-using System.Threading.Tasks;
-using Nop.Services.Catalog;
-using Nop.Plugin.Api.Infrastructure;
 using Nop.Core;
-using System.Net;
-using Nop.Plugin.Api.Attributes;
-using Nop.Plugin.Api.Authorization.Attributes;
-using Nop.Plugin.Api.DTO.Errors;
-using Nop.Plugin.Api.DTO.Products;
-using Nop.Plugin.Api.JSON.ActionResults;
-using Nop.Plugin.Api.JSON.Serializers;
-using Nop.Services.Security;
-using Nop.Services.Customers;
-using Nop.Services.Stores;
-using Nop.Services.Discounts;
-using Nop.Services.Logging;
-using Nop.Services.Localization;
-using Nop.Services.Media;
-using Nop.Plugin.Api.Factories;
-using Nop.Plugin.Api.Helpers;
-using Nop.Plugin.Api.Models.ProductsParameters;
-using Nop.Plugin.Api.Services;
-using Nop.Services.Seo;
-using Nop.Services.Orders;
-using DocumentFormat.OpenXml.Spreadsheet;
-using System;
-using Nop.Services.Plugins;
-using Nop.Core.Domain.Configuration;
-using Nop.Data;
-using Nop.Services.Shipping;
-using Nop.Plugin.Api.DTOs.ShippingMethod;
-using Nop.Plugin.Api.MappingExtensions;
-using Microsoft.AspNetCore.Authorization;
 using Nop.Plugin.Api.Authorization.Policies;
+using Nop.Plugin.Api.DTO.Errors;
 using Nop.Plugin.Api.DTOs.Base;
+using Nop.Plugin.Api.DTOs.Statistics;
+using Nop.Plugin.Api.Helpers;
+using Nop.Plugin.Api.JSON.Serializers;
 using Nop.Plugin.Api.Models.Base;
+using Nop.Plugin.Api.Services;
 using Nop.Services.Authentication;
-using Nop.Plugin.Api.DTO;
+using Nop.Services.Customers;
+using Nop.Services.Discounts;
+using Nop.Services.Localization;
+using Nop.Services.Logging;
+using Nop.Services.Media;
+using Nop.Services.Security;
+using Nop.Services.Stores;
+using System;
+using System.Net;
+using System.Threading.Tasks;
+
 
 namespace Nop.Plugin.Api.Controllers;
 
 #nullable enable
 
-[Route("api/addresses")]
+[Route("api/seller-statistics")]
 
-public class AddressController : BaseSyncController<AddressDto>
+public class SellerStatisticsController : BaseSyncController<SellerStatisticsDto>
 {
-    #region Attributes
-
-    private readonly IAddressApiService _addressApiService;
+    #region Fields
+    private readonly ISellerStatisticsApiService _sellerStatisticsApiService;
 
     #endregion
 
     #region Ctr
-    public AddressController(
+
+    public SellerStatisticsController(
         IJsonFieldsSerializer jsonFieldsSerializer,
         IAclService aclService,
         ICustomerService customerService,
@@ -66,40 +47,26 @@ public class AddressController : BaseSyncController<AddressDto>
         ICustomerActivityService customerActivityService,
         ILocalizationService localizationService,
         IPictureService pictureService,
-        IAddressApiService addressApiService,
         IAuthenticationService authenticationService,
+        ISellerStatisticsApiService sellerStatisticsApiService,
         IStoreContext storeContext
     ) :
-    base(
-        addressApiService,
-        jsonFieldsSerializer,
-        aclService,
-        customerService,
-        storeMappingService,
-        storeService,
-        discountService,
-        customerActivityService,
-        localizationService,
-        pictureService,
-        authenticationService,
-        storeContext
-    )
+        base(sellerStatisticsApiService, jsonFieldsSerializer, aclService, customerService, storeMappingService, storeService, discountService, customerActivityService,
+             localizationService, pictureService, authenticationService, storeContext)
     {
-        _addressApiService = addressApiService;
+        _sellerStatisticsApiService = sellerStatisticsApiService;
     }
-
 
     #endregion
 
     #region Methods
-
     /// <summary>
     ///     Retrieve current customer
     /// </summary>
     /// <param name="fields">Fields from the customer you want your json to contain</param>
     /// <response code="200">OK</response>
     /// <response code="401">Unauthorized</response>
-    [HttpPost("syncdata2", Name = "SyncAddresses2")]
+    [HttpPost("syncdata2", Name = "SyncSellerStatistics2")]
     [Authorize(Policy = SellerRoleAuthorizationPolicy.Name)]
     [ProducesResponseType(typeof(BaseSyncResponse), (int)HttpStatusCode.OK)]
     [ProducesResponseType(typeof(ErrorsRootObject), (int)HttpStatusCode.BadRequest)]
@@ -122,7 +89,7 @@ public class AddressController : BaseSyncController<AddressDto>
             lastUpdateUtc = DTOHelper.TimestampToDateTime(body.LastUpdateTs.Value);
         }
 
-        var result = await _addressApiService.GetLastestUpdatedItems2Async(
+        var result = await _sellerStatisticsApiService.GetLastestUpdatedItems2Async(
                 body.IdsInDb,
                 lastUpdateUtc,
                 sellerEntity.Id
@@ -133,7 +100,7 @@ public class AddressController : BaseSyncController<AddressDto>
 
     #endregion
 
-    #region private Methods
+    #region Private methods
 
 
     #endregion

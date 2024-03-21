@@ -119,7 +119,7 @@ public class ApiStartup : INopStartup
         services.Configure<KestrelServerOptions>(options =>
         {
             options.AllowSynchronousIO = true;
-            options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(60);
+            options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(20);
         });
         services.Configure<IISServerOptions>(options =>
         {
